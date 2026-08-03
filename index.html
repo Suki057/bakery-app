@@ -79,9 +79,10 @@
   .field{position:relative}
   table{width:100%;border-collapse:collapse;font-size:12px}
   th,td{padding:8px 8px;text-align:right;vertical-align:top;border-bottom:1px solid rgba(123,123,140,0.1)}
-  th:first-child,td:first-child{text-align:left}
+  th:first-child,td:first-child{text-align:left;white-space:nowrap}
   th{color:var(--muted);font-weight:700;font-size:10px;text-align:left;background:rgba(255,231,151,0.22);
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  td input[type="number"],td input[type="text"]{padding:5px 8px;border-radius:10px;font-size:12px}
   tr.tot td{font-weight:800;border-top:2px solid rgba(123,123,140,0.12)}
   .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;
     border:1px solid var(--edge);box-shadow:0 2px 6px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.85)}
@@ -177,17 +178,10 @@
       <div class="summary" id="dailySummary"></div>
     </div>
     <div class="card">
-      <h2>📋 记账明细</h2>
-      <div class="row grid2" style="margin-bottom:12px">
-        <div class="field"><label>按月份筛选明细</label>
-          <input type="month" id="recMonth" onchange="renderRecords()"></div>
-        <div class="field"><label>当月记录合计利润</label>
-          <input id="recMonthTotal" disabled></div>
-      </div>
-      <table id="recordTable">
-        <thead><tr><th>日期</th><th>渠道</th><th>营业额</th><th>到手价</th><th>当日利润</th><th></th></tr></thead>
-        <tbody></tbody><tfoot></tfoot>
-      </table>
+      <h2>📊 当月营业额 <span class="tag" id="monthTurnoverLabel"></span></h2>
+      <div class="field" style="margin-bottom:14px"><label>选择月份</label>
+        <input type="month" id="monthTurnoverMonth" onchange="renderMonthTurnover()"></div>
+      <div class="summary" id="monthTurnoverSummary"></div>
     </div>
   </section>
 
@@ -198,7 +192,7 @@
       <div class="row grid2" style="margin-bottom:12px">
         <div class="field"><label>选择月份（默认当月，可切换看历史）</label>
           <input type="month" id="monthPick" onchange="renderMonthly()"></div>
-        <div class="field"><label>当月净利润</label>
+        <div class="field"><label>当月实际利润</label>
           <input id="monthNet" disabled></div>
       </div>
       <div class="row grid2">
@@ -210,21 +204,21 @@
         <div class="field"><label>进货成本（默认当月进货合计，可改）</label><input type="number" id="mPurchase" oninput="onMonthCostEdit()"></div>
       </div>
       <div class="row grid2" style="margin-top:12px">
-        <div class="field"><label>当月成本合计（房租+水电+工资+进货）</label><input id="monthCostTotal" disabled></div>
-        <div class="field"><label>当月固定成本合计（房租+水电+工资）</label><input id="monthFixedTotal" disabled></div>
+        <div class="field"><label>成本合计（房租+水电+工资+进货）</label><input id="monthCostTotal" disabled></div>
+        <div class="field"><label>固定成本合计（房租+水电+工资）</label><input id="monthFixedTotal" disabled></div>
       </div>
     </div>
     <div class="card">
       <h2>📊 月度统计 <span class="tag" id="monthLabel"></span></h2>
       <div class="summary" id="monthSummary"></div>
-      <div class="hint">月净利润 = 当月总利润(毛利) − 当月成本合计(房租+水电+工资+进货成本)。固定成本每月可在此调整，默认取自设置。</div>
+      <div class="hint">当月实际利润 = 当月实际利润之和（来自每日记账）。毛利润 = 实际营业额 − 固定成本。资金月增收 = 实际营业额 − 成本合计。</div>
       <h2 style="margin-top:18px">当月每日利润趋势</h2>
       <div class="bars" id="monthBars"></div>
     </div>
     <div class="card">
       <h2>📋 当月每日明细</h2>
       <table id="monthTable">
-        <thead><tr><th>日期</th><th>总营业额</th><th>总到手价</th><th>产品成本</th><th>利润</th></tr></thead>
+        <thead><tr><th>日期</th><th>总营业额</th><th>实际营业额</th><th>实际利润</th></tr></thead>
         <tbody></tbody><tfoot></tfoot>
       </table>
       <div class="actions">
@@ -428,7 +422,7 @@ function renderDaily(){
   document.getElementById('dailyDateLabel').textContent=date;
   document.getElementById('blockA').innerHTML=renderBlock(BLOCKS.A);
   document.getElementById('blockB').innerHTML=renderBlock(BLOCKS.B);
-  updateDayComputed();
+  updateDayComputed();renderMonthTurnover();
 }
 function renderBlock(block){
   const date=document.getElementById('dailyDate').value;
@@ -475,6 +469,29 @@ function updateDayComputed(){
     stat('总营业额',money(dailyTurnover))+stat('实际营业额',money(actualTurnover))+
     stat('实际利润',money(actualProfit))+stat('记账渠道',cnt+' 个');
 }
+function monthDayMap(m){
+  const dayMap={};
+  (S.records||[]).filter(r=>(r.date||'').startsWith(m)).forEach(r=>{
+    const block=blockOf(r.ch);const c=block.channels.find(x=>x.k===r.ch);
+    if(!c||!c.sum)return;
+    if(!dayMap[r.date])dayMap[r.date]={dailyTurnover:0,actualTurnover:0,actualProfit:0};
+    dayMap[r.date].dailyTurnover+=num(r.r);
+    dayMap[r.date].actualTurnover+=num(block.profitBase==='r'?r.r:r.n);
+    dayMap[r.date].actualProfit+=num(r.profit);
+  });
+  return dayMap;
+}
+function renderMonthTurnover(){
+  const m=document.getElementById('monthTurnoverMonth').value||ym(new Date());
+  document.getElementById('monthTurnoverMonth').value=m;
+  document.getElementById('monthTurnoverLabel').textContent=m;
+  const dayMap=monthDayMap(m);
+  let dailyTurnover=0,actualTurnover=0,actualProfit=0;
+  Object.values(dayMap).forEach(d=>{dailyTurnover+=d.dailyTurnover;actualTurnover+=d.actualTurnover;actualProfit+=d.actualProfit;});
+  document.getElementById('monthTurnoverSummary').innerHTML=
+    stat('总营业额',money(dailyTurnover))+stat('实际营业额',money(actualTurnover))+
+    stat('实际利润',money(actualProfit))+stat('有记录天数',Object.keys(dayMap).length+' 天');
+}
 function saveBlock(key){
   const block=BLOCKS[key];const date=document.getElementById('dailyDate').value;
   const day=getDraft(date);let count=0;
@@ -490,27 +507,8 @@ function saveBlock(key){
   if(!count){toast('请先填写数据再保存');return;}
   block.channels.forEach(c=>{if(day.ch[c.k])delete day.ch[c.k];});
   S.draft[date]=day;save();
-  renderDaily();renderRecords();renderMonthly();renderFunds();toast('已保存 '+count+' 条明细');
+  renderDaily();renderMonthly();renderFunds();toast('已保存 '+count+' 条明细');
 }
-function renderRecords(){
-  const m=document.getElementById('recMonth').value||ym(new Date());
-  document.getElementById('recMonth').value=m;
-  const list=(S.records||[]).filter(r=>(r.date||'').startsWith(m))
-    .sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.ch||'').localeCompare(a.ch||''));
-  const tb=q('#recordTable tbody');tb.innerHTML='';let tot=0;
-  list.forEach(rec=>{tot+=num(rec.profit);
-    tb.innerHTML+=`<tr><td>${rec.date}</td><td>${rec.name||rec.ch||''}</td>
-      <td>${money(rec.r)}</td><td>${money(rec.n)}</td>
-      <td class="${rec.profit<0?'neg':'pos'}">${money(rec.profit)}</td>
-      <td><button class="btn ghost sm" onclick="delRecord('${rec.id}')">删</button></td></tr>`;});
-  if(!list.length)tb.innerHTML='<tr><td colspan="6" class="muted">本月暂无明细</td></tr>';
-  q('#recordTable tfoot').innerHTML=`<tr class="tot"><td>合计</td><td colspan="3">${list.length} 条</td><td>${money(tot)}</td><td></td></tr>`;
-  document.getElementById('recMonthTotal').value=money(tot);
-}
-function delRecord(id){const rec=(S.records||[]).find(r=>r.id===id);if(!rec)return;
-  addToTrash('record',rec,'记账 '+rec.date+' '+(rec.name||rec.ch));
-  S.records=S.records.filter(r=>r.id!==id);save();
-  renderRecords();renderMonthly();renderFunds();toast('已移入回收站');}
 
 /* ---------- 月度 ---------- */
 function monthPurchaseDefault(m){return (S.purchase||[]).filter(p=>(p.date||'').startsWith(m)).reduce((s,p)=>s+num(p.amount),0);}
@@ -529,27 +527,26 @@ function renderMonthly(){
   const costTotal=fixed+mc.purchase;
   document.getElementById('monthCostTotal').value=money(costTotal);
   document.getElementById('monthFixedTotal').value=money(fixed);
-  const recs=(S.records||[]).filter(r=>(r.date||'').startsWith(m));
-  let tr=0,tn=0,tc=0,tp=0;const dayMap={};
-  recs.forEach(r=>{tr+=num(r.r);tn+=num(r.n);tc+=num(r.cost);tp+=num(r.profit);
-    if(!dayMap[r.date])dayMap[r.date]={dr:0,dn:0,dc:0,dp:0};
-    dayMap[r.date].dr+=num(r.r);dayMap[r.date].dn+=num(r.n);
-    dayMap[r.date].dc+=num(r.cost);dayMap[r.date].dp+=num(r.profit);});
-  const net=tp-costTotal;
+  const dayMap=monthDayMap(m);
+  let actualTurnover=0,actualProfit=0,dailyTurnover=0;
+  Object.values(dayMap).forEach(d=>{actualTurnover+=d.actualTurnover;actualProfit+=d.actualProfit;dailyTurnover+=d.dailyTurnover;});
+  const gross=actualTurnover-fixed;
+  const fundGrowth=actualTurnover-costTotal;
   document.getElementById('monthSummary').innerHTML=
-    stat('总营业额',money(tr))+stat('总到手价',money(tn))+
-    stat('总产品成本',money(tc))+stat('总利润(毛利)',money(tp))+
-    `<div class="stat"><div class="k">月净利润</div><div class="v ${net<0?'neg':'pos'}">${money(net)}</div></div>`;
-  document.getElementById('monthNet').value=money(net);
+    stat('实际营业额',money(actualTurnover))+
+    stat('毛利润',money(gross))+
+    stat('资金月增收',money(fundGrowth))+
+    stat('记账天数',Object.keys(dayMap).length+' 天');
+  document.getElementById('monthNet').value=money(actualProfit);
   const days=Object.keys(dayMap).sort();
   const bars=document.getElementById('monthBars');bars.innerHTML='';
-  const max=Math.max(1,...days.map(d=>dayMap[d].dp));
-  days.forEach(d=>{const h=Math.max(2,(dayMap[d].dp/max)*140);
+  const max=Math.max(1,...days.map(d=>dayMap[d].actualProfit));
+  days.forEach(d=>{const h=Math.max(2,(dayMap[d].actualProfit/max)*140);
     const b=document.createElement('div');b.className='bar';b.style.height=h+'px';
-    b.title=d+'：'+money(dayMap[d].dp);b.innerHTML=`<span>${d.slice(5)}</span>`;bars.appendChild(b);});
+    b.title=d+'：'+money(dayMap[d].actualProfit);b.innerHTML=`<span>${d.slice(5)}</span>`;bars.appendChild(b);});
   const tb=q('#monthTable tbody');tb.innerHTML='';
-  days.forEach(d=>{const x=dayMap[d];tb.innerHTML+=`<tr><td>${d}</td><td>${money(x.dr)}</td><td>${money(x.dn)}</td><td>${money(x.dc)}</td><td class="${x.dp<0?'neg':'pos'}">${money(x.dp)}</td></tr>`;});
-  q('#monthTable tfoot').innerHTML=`<tr class="tot"><td>合计</td><td>${money(tr)}</td><td>${money(tn)}</td><td>${money(tc)}</td><td class="${tp<0?'neg':'pos'}">${money(tp)}</td></tr>`;
+  days.forEach(d=>{const x=dayMap[d];tb.innerHTML+=`<tr><td>${d}</td><td>${money(x.dailyTurnover)}</td><td>${money(x.actualTurnover)}</td><td class="${x.actualProfit<0?'neg':'pos'}">${money(x.actualProfit)}</td></tr>`;});
+  q('#monthTable tfoot').innerHTML=`<tr class="tot"><td>合计</td><td>${money(dailyTurnover)}</td><td>${money(actualTurnover)}</td><td class="${actualProfit<0?'neg':'pos'}">${money(actualProfit)}</td></tr>`;
 }
 function onMonthCostEdit(){
   const m=document.getElementById('monthPick').value;
@@ -709,7 +706,7 @@ function restoreTrash(id){const i=(S.trash||[]).findIndex(t=>t.id===id);if(i<0)r
     if(t.data.type==='working')S.funds.working=num(S.funds.working)+num(t.data.amt);
     else S.funds.fixedBase=num(S.funds.fixedBase)+num(t.data.amt);}
   else if(t.type==='fund'){S.funds[t.data.type]=num(t.data.value);}
-  S.trash.splice(i,1);save();renderTrash();renderRecords();renderMonthly();renderFunds();toast('已恢复');}
+  S.trash.splice(i,1);save();renderTrash();renderMonthly();renderFunds();toast('已恢复');}
 function permDelete(id){S.trash=S.trash.filter(t=>t.id!==id);save();renderTrash();toast('已永久删除');}
 
 /* ---------- 设置 ---------- */
@@ -732,7 +729,7 @@ function switchTab(t){
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   ['daily','monthly','funds','purchase','trash','settings'].forEach(s=>
     document.getElementById('tab-'+s).style.display=(s===t?'block':'none'));
-  if(t==='daily'){renderDaily();renderRecords();}
+  if(t==='daily'){renderDaily();}
   if(t==='monthly')renderMonthly();
   if(t==='funds')renderFunds();
   if(t==='purchase')renderPurchase();
@@ -756,9 +753,9 @@ document.getElementById('dailyDate').value=today();
 document.getElementById('monthPick').value=ym(new Date());
 document.getElementById('ledgerDate').value=today();
 document.getElementById('purMonth').value=ym(new Date());
-document.getElementById('recMonth').value=ym(new Date());
+document.getElementById('monthTurnoverMonth').value=ym(new Date());
 document.getElementById('purDate').value=today();
-fillCatSelect();renderPurchase();renderDaily();renderSettings();renderRecords();
+fillCatSelect();renderPurchase();renderDaily();renderSettings();renderMonthTurnover();
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 </script>
 </body>
