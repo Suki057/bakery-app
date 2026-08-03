@@ -1,0 +1,17 @@
+{
+  "name": "烘焙店经营记账助手",
+  "short_name": "烘焙记账",
+  "description": "每日营业额、月度利润、资金看板、进货清单",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#FFF9E0",
+  "theme_color": "#CFF980",
+  "orientation": "portrait",
+  "icons": [
+    {"src": "icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any"},
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}

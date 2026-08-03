@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#CFF980">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="烘焙记账">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+<link rel="manifest" href="manifest.json">
+<title>🥐 烘焙店经营记账助手</title>
+<style>
+  :root{
+    --glass:rgba(255,255,255,0.18); --glass-strong:rgba(255,255,255,0.28);
+    --border:rgba(255,255,255,0.5); --edge:rgba(255,255,255,0.55);
+    --ink:#2F2F3A; --muted:#6B6B7B;
+    --accent:#CFF980; --accent2:#AEE05A; --green:#58C46A; --red:#F28B82;
+    --shadow:0 12px 40px rgba(80,70,60,0.12), inset 0 1px 0 rgba(255,255,255,0.85);
+    --band:linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.18) 18%, rgba(255,255,255,0.0) 48%);
+    --glow:0 0 0 1px rgba(255,255,255,0.4);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);
+    min-height:100vh;min-height:100dvh;line-height:1.5;-webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(255,231,151,0.55) 0%, transparent 38%),
+      radial-gradient(circle at 88% 12%, rgba(196,254,204,0.5) 0%, transparent 36%),
+      radial-gradient(circle at 75% 82%, rgba(196,247,254,0.55) 0%, transparent 40%),
+      radial-gradient(circle at 25% 75%, rgba(255,200,220,0.4) 0%, transparent 35%),
+      linear-gradient(135deg,#FFF9E0 0%,#FFF0C4 50%,#FFE8E0 100%);
+    background-attachment:fixed}
+  .topbar{position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top);
+    backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);
+    background:rgba(255,249,224,0.32);border-bottom:1px solid var(--border);
+    box-shadow:0 8px 30px rgba(80,70,60,0.10)}
+  header{background:transparent;color:var(--ink);
+    padding:14px 22px;display:flex;align-items:center;justify-content:space-between}
+  header h1{font-size:18px;font-weight:800;letter-spacing:.5px}
+  header .sub{font-size:10px;opacity:.8;margin-top:2px}
+  nav{display:flex;gap:6px;background:transparent;padding:8px 16px 10px;
+    overflow-x:auto;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+  nav button{flex:0 0 auto;border:none;background:transparent;color:var(--muted);
+    font-size:12px;font-weight:600;padding:9px 16px;border-radius:50px;cursor:pointer;
+    transition:.18s;white-space:nowrap}
+  nav button:hover{background:rgba(207,249,128,0.32);color:#3A4A2A}
+  nav button.active{background:linear-gradient(135deg,rgba(207,249,128,0.85),rgba(174,224,90,0.85));color:#26361D;
+    box-shadow:0 4px 14px rgba(174,224,90,0.35), inset 0 1px 0 rgba(255,255,255,0.6)}
+  main{max-width:980px;margin:0 auto;padding:22px 16px calc(60px + env(safe-area-inset-bottom))}
+  .card{background:var(--glass);border:1px solid var(--edge);border-radius:22px;
+    padding:22px;box-shadow:var(--shadow);margin-bottom:20px;
+    backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+    position:relative;overflow:hidden}
+  .card::before{content:'';position:absolute;inset:0;border-radius:22px;
+    background:var(--band);
+    pointer-events:none;z-index:0}
+  .card>*{position:relative;z-index:1}
+  .card h2{font-size:14px;margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .card h2 .tag{font-size:9px;background:rgba(207,249,128,0.5);color:#3E5A22;
+    padding:3px 10px;border-radius:20px;font-weight:600;backdrop-filter:blur(6px)}
+  label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  input,select{width:100%;padding:11px 14px;border:1px solid var(--edge);
+    border-radius:14px;font-size:13px;background:rgba(255,255,255,0.45);color:var(--ink);outline:none;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.9), inset 0 1px 2px rgba(255,255,255,0.5),0 2px 8px rgba(0,0,0,0.04);
+    transition:.18s}
+  input:focus,select:focus{background:rgba(255,255,255,0.65);border-color:#C4F7FE;
+    box-shadow:0 0 0 4px rgba(196,247,254,.28),inset 0 1px 2px rgba(255,255,255,0.8)}
+  .row{display:grid;gap:12px}
+  .grid2{grid-template-columns:1fr 1fr}
+  .grid3{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+  .field{position:relative}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:11px 10px;text-align:right;border-bottom:1px solid rgba(123,123,140,0.1)}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:700;font-size:10px;background:rgba(255,231,151,0.22);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  tr.tot td{font-weight:800;border-top:2px solid rgba(123,123,140,0.12)}
+  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;
+    border:1px solid var(--edge);box-shadow:0 2px 6px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.85)}
+  .pill.n{background:rgba(196,254,204,0.45);color:#2E6B3A;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .pos{color:#3A9C52;font-weight:700}.neg{color:var(--red);font-weight:700}
+  .btn{border:1px solid rgba(255,255,255,0.6);background:linear-gradient(135deg,rgba(207,249,128,0.9),rgba(174,224,90,0.9));color:#26361D;
+    font-size:12px;font-weight:700;padding:11px 20px;border-radius:50px;cursor:pointer;transition:.18s;
+    box-shadow:0 6px 18px rgba(174,224,90,0.35), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 0 0 1px rgba(255,255,255,0.15)}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(174,224,90,0.45), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 0 0 1px rgba(255,255,255,0.15)}
+  .btn.ghost{background:rgba(255,255,255,0.35);color:#4A6B2A;border:1px solid var(--edge);
+    box-shadow:0 4px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 0 0 1px rgba(255,255,255,0.12)}
+  .btn.ghost:hover{background:rgba(207,249,128,0.3);box-shadow:0 6px 16px rgba(174,224,90,0.2), inset 0 1px 0 rgba(255,255,255,0.9)}
+  .btn.sm{padding:7px 14px;font-size:11px;margin:2px}
+  .btn.xs{padding:4px 10px;font-size:10px;margin:2px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+  @media(max-width:640px){.summary{grid-template-columns:1fr 1fr}}
+  .stat{background:rgba(196,247,254,0.25);border-radius:18px;padding:16px;border:1px solid var(--edge);
+    box-shadow:var(--shadow);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    position:relative;overflow:hidden}
+  .stat::before{content:'';position:absolute;inset:0;border-radius:18px;background:var(--band);pointer-events:none;z-index:0}
+  .stat .k{font-size:10px;color:var(--muted);font-weight:600}
+  .stat .v{font-size:20px;font-weight:800;margin-top:6px;color:#2D4A5E}
+  .fund-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:640px){.fund-grid{grid-template-columns:1fr}}
+  .fund{background:rgba(207,249,128,0.22);border-radius:20px;padding:18px 16px;text-align:center;border:1px solid var(--edge);
+    box-shadow:var(--shadow);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    position:relative;overflow:hidden}
+  .fund::before{content:'';position:absolute;inset:0;border-radius:20px;background:var(--band);pointer-events:none;z-index:0}
+  .fund .name{font-size:11px;color:var(--muted);font-weight:700}
+  .fund .amt{font-size:22px;font-weight:800;margin:8px 0;color:#4A6B2A}
+  .fund input{text-align:center;font-weight:700;font-size:16px;background:rgba(255,255,255,0.45);border-radius:14px}
+  .bars{display:flex;align-items:flex-end;gap:5px;height:160px;padding:10px 0;overflow-x:auto}
+  .bars .bar{flex:1;min-width:10px;background:linear-gradient(180deg,rgba(207,249,128,0.85),rgba(174,224,90,0.75));border-radius:8px 8px 0 0;
+    position:relative;transition:.2s;box-shadow:0 -2px 10px rgba(174,224,90,0.25)}
+  .bars .bar:hover{opacity:.9;transform:scaleY(1.02)}
+  .bars .bar span{position:absolute;top:-18px;left:50%;transform:translateX(-50%);
+    font-size:7px;color:var(--muted);white-space:nowrap}
+  .hint{font-size:10px;color:#4A5A6A;background:rgba(196,247,254,0.25);
+    padding:12px 14px;border-radius:16px;margin-top:10px;line-height:1.6;border:1px solid var(--edge);
+    box-shadow:var(--shadow);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    position:relative;overflow:hidden}
+  .hint::before{content:'';position:absolute;inset:0;border-radius:16px;background:var(--band);pointer-events:none;z-index:0}
+  .toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+    background:rgba(47,47,58,0.82);color:#fff;padding:12px 22px;border-radius:16px;font-size:12px;
+    opacity:0;transition:.3s;pointer-events:none;z-index:99;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    position:relative;border:1px solid rgba(255,255,255,0.28);
+    box-shadow:0 10px 30px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.35)}
+  .toast::before{content:'';position:absolute;inset:0;border-radius:16px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.0) 38%);pointer-events:none}
+  .modal-backdrop{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+    background:rgba(60,55,50,0.28);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:20px}
+  .modal{position:relative;width:100%;max-width:420px;padding:24px;border-radius:24px;
+    background:var(--glass);border:1px solid var(--edge);box-shadow:var(--shadow);
+    backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);overflow:hidden}
+  .modal::before{content:'';position:absolute;inset:0;border-radius:24px;background:var(--band);pointer-events:none;z-index:0}
+  .stat>*,.fund>*,.hint>*,.modal>*{position:relative;z-index:1}
+  .toast.show{opacity:1}
+  .muted{color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<div class="topbar">
+<header>
+  <div>
+    <h1>🥐 烘焙店经营记账助手</h1>
+    <div class="sub">每日营业额 · 月度利润 · 资金看板 · 进货清单 · 本地保存</div>
+  </div>
+</header>
+<nav id="nav">
+  <button data-tab="daily" class="active" onclick="switchTab('daily')">📅 每日记账</button>
+  <button data-tab="monthly" onclick="switchTab('monthly')">📊 月度统计</button>
+  <button data-tab="funds" onclick="switchTab('funds')">💰 资金记录</button>
+  <button data-tab="purchase" onclick="switchTab('purchase')">🛒 进货清单</button>
+  <button data-tab="trash" onclick="switchTab('trash')">🗑️ 回收站</button>
+  <button data-tab="settings" onclick="switchTab('settings')">⚙️ 设置</button>
+</nav>
+</div>
+<main>
+  <!-- 每日记账 -->
+  <section id="tab-daily">
+    <div class="card">
+      <h2>📅 每日记账 <span class="tag" id="dailyDateLabel"></span></h2>
+      <div class="field" style="margin-bottom:14px"><label>记录日期</label>
+        <input type="date" id="dailyDate" onchange="renderDaily()"></div>
+      <div id="blockA"></div>
+      <div id="blockB" style="margin-top:18px"></div>
+      <div class="hint">填各渠道数据后，利润按公式自动算：堂食/画室 = 营业额×利润率；美团/外卖/京东 = 到手价×利润率。点板块「保存为明细」把有数据的行存入下方明细并清空方框。</div>
+    </div>
+    <div class="card">
+      <h2>📊 当前录入合计</h2>
+      <div class="summary" id="dailySummary"></div>
+    </div>
+    <div class="card">
+      <h2>📋 记账明细</h2>
+      <div class="row grid2" style="margin-bottom:12px">
+        <div class="field"><label>按月份筛选明细</label>
+          <input type="month" id="recMonth" onchange="renderRecords()"></div>
+        <div class="field"><label>当月记录合计利润</label>
+          <input id="recMonthTotal" disabled></div>
+      </div>
+      <table id="recordTable">
+        <thead><tr><th>日期</th><th>渠道</th><th>营业额</th><th>到手价</th><th>当日利润</th><th></th></tr></thead>
+        <tbody></tbody><tfoot></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- 月度统计 -->
+  <section id="tab-monthly" style="display:none">
+    <div class="card">
+      <h2>🧾 当月成本明细 <span class="tag">默认锁定当月</span></h2>
+      <div class="row grid2" style="margin-bottom:12px">
+        <div class="field"><label>选择月份（默认当月，可切换看历史）</label>
+          <input type="month" id="monthPick" onchange="renderMonthly()"></div>
+        <div class="field"><label>当月净利润</label>
+          <input id="monthNet" disabled></div>
+      </div>
+      <div class="row grid2">
+        <div class="field"><label>房租</label><input type="number" id="mRent" oninput="onMonthCostEdit()"></div>
+        <div class="field"><label>水电费</label><input type="number" id="mUtility" oninput="onMonthCostEdit()"></div>
+      </div>
+      <div class="row grid2" style="margin-top:12px">
+        <div class="field"><label>工资发放</label><input type="number" id="mWage" oninput="onMonthCostEdit()"></div>
+        <div class="field"><label>进货成本（默认当月进货合计，可改）</label><input type="number" id="mPurchase" oninput="onMonthCostEdit()"></div>
+      </div>
+      <div class="row grid2" style="margin-top:12px">
+        <div class="field"><label>当月成本合计（房租+水电+工资+进货）</label><input id="monthCostTotal" disabled></div>
+        <div class="field"><label>当月固定成本合计（房租+水电+工资）</label><input id="monthFixedTotal" disabled></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>📊 月度统计 <span class="tag" id="monthLabel"></span></h2>
+      <div class="summary" id="monthSummary"></div>
+      <div class="hint">月净利润 = 当月总利润(毛利) − 当月成本合计(房租+水电+工资+进货成本)。固定成本每月可在此调整，默认取自设置。</div>
+      <h2 style="margin-top:18px">当月每日利润趋势</h2>
+      <div class="bars" id="monthBars"></div>
+    </div>
+    <div class="card">
+      <h2>📋 当月每日明细</h2>
+      <table id="monthTable">
+        <thead><tr><th>日期</th><th>总营业额</th><th>总到手价</th><th>产品成本</th><th>利润</th></tr></thead>
+        <tbody></tbody><tfoot></tfoot>
+      </table>
+      <div class="actions">
+        <button class="btn ghost sm" onclick="exportMonthCSV()">导出本月 CSV</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 资金记录 -->
+  <section id="tab-funds" style="display:none">
+    <div class="card">
+      <h2>💰 资金看板</h2>
+      <div class="fund-grid">
+        <div class="fund"><div class="name">店铺原始资金</div>
+          <input type="number" id="fOriginal" oninput="onFundEdit()"></div>
+        <div class="fund"><div class="name">不动资金</div>
+          <input type="number" id="fFixed" oninput="onFundEdit()">
+          <button class="btn ghost sm" onclick="resetFund('fixed')">清0</button></div>
+        <div class="fund"><div class="name">流动资金</div>
+          <input type="number" id="fWorking" oninput="onFundEdit()">
+          <button class="btn ghost sm" onclick="resetFund('working')">清0</button></div>
+      </div>
+      <div class="summary" style="margin-top:16px">
+        <div class="stat"><div class="k">店铺原始资金</div><div class="v" id="fundTotal"></div></div>
+        <div class="stat"><div class="k">可动用(流动资金)</div><div class="v" id="fundUsable"></div></div>
+        <div class="stat"><div class="k">不动资金</div><div class="v" id="fundFixed"></div></div>
+        <div class="stat"><div class="k">最近更新</div><div class="v" id="fundUpdated" style="font-size:14px"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>📝 资金变动记录</h2>
+      <div class="row grid3" style="margin-bottom:12px">
+        <div class="field"><label>日期</label><input type="date" id="ledgerDate"></div>
+        <div class="field"><label>类型</label>
+          <select id="ledgerType">
+            <option value="working">流动资金</option>
+            <option value="original">店铺原始资金</option>
+            <option value="fixed">不动资金</option>
+          </select></div>
+        <div class="field"><label>变动金额（可负）</label><input type="number" id="ledgerAmt"></div>
+      </div>
+      <div class="row" style="margin-bottom:12px">
+        <div class="field"><label>备注</label><input type="text" id="ledgerNote" placeholder="如：进货支出 / 利润转入"></div>
+      </div>
+      <button class="btn" onclick="addLedger()">添加记录</button>
+      <table id="ledgerTable" style="margin-top:16px">
+        <thead><tr><th>日期</th><th>类型</th><th>变动</th><th>备注</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 进货清单 -->
+  <section id="tab-purchase" style="display:none">
+    <div class="card">
+      <h2>🛒 进货清单 <span class="tag">自动分类</span></h2>
+      <div class="row grid2" style="margin-bottom:14px">
+        <div class="field"><label>按月份筛选</label>
+          <input type="month" id="purMonth" onchange="renderPurchase()"></div>
+        <div class="field"><label>当月进货合计</label>
+          <input id="purMonthTotal" disabled></div>
+      </div>
+      <div class="summary" id="purCatSummary"></div>
+      <div class="hint">分类按名称/用途关键词自动识别，可手动修改。各类别合计随录入实时更新。</div>
+    </div>
+    <div class="card">
+      <h2>📦 添加进货项</h2>
+      <div class="row grid2">
+        <div class="field"><label>名称</label><input type="text" id="purName" placeholder="如：高筋面粉" oninput="autoCat()"></div>
+        <div class="field"><label>重量/数量</label><input type="text" id="purWeight" placeholder="如：25kg / 3箱 / 500g"></div>
+      </div>
+      <div class="row grid2" style="margin-top:12px">
+        <div class="field"><label>用途</label><input type="text" id="purUse" placeholder="如：做面包" oninput="autoCat()"></div>
+        <div class="field"><label>分类（自动识别，可改）</label><select id="purCat"></select></div>
+      </div>
+      <div class="row grid3" style="margin-top:12px">
+        <div class="field"><label>金额</label><input type="number" step="0.01" id="purAmt"></div>
+        <div class="field"><label>进货日期</label><input type="date" id="purDate"></div>
+        <div class="field"><label>下单途径</label>
+          <select id="purChannel">
+            <option value="美团">美团</option>
+            <option value="淘宝">淘宝</option>
+            <option value="淘宝闪购">淘宝闪购</option>
+            <option value="京东">京东</option>
+            <option value="拼多多">拼多多</option>
+            <option value="线下">线下</option>
+            <option value="其他">其他</option>
+          </select></div>
+      </div>
+    <div class="row" style="margin-top:12px;display:flex;justify-content:flex-end">
+      <button class="btn" onclick="addPurchase()">添加</button>
+    </div>
+    <div class="hint" id="autoCatHint">输入名称或用途后将自动判断分类，也可手动选择。</div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn ghost sm" onclick="exportPurchaseCSV()">导出 CSV</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>📋 进货明细</h2>
+      <table id="purTable">
+        <thead><tr><th>日期</th><th>名称</th><th>重量/数量</th><th>用途</th><th>分类</th><th>途径</th><th>金额</th></tr></thead>
+        <tbody></tbody><tfoot></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- 回收站 -->
+  <section id="tab-trash" style="display:none">
+    <div class="card">
+      <h2>🗑️ 回收站 <span class="tag">21 天后自动永久删除</span></h2>
+      <p class="muted" style="margin-bottom:12px">删除的记账明细、进货、资金记录都会进入这里。可随时恢复，或手动永久删除。超过 21 天将自动清除。</p>
+      <table id="trashTable">
+        <thead><tr><th>删除日期</th><th>类型</th><th>内容</th><th>剩余(天)</th><th>操作</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn ghost sm" onclick="purgeTrash();renderTrash()">立即清理过期项</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 设置 -->
+  <section id="tab-settings" style="display:none">
+    <div class="card">
+      <h2>⚙️ 基础设置</h2>
+      <div class="row grid2">
+        <div class="field"><label>默认食材利润率（% 占营业额）</label>
+          <input type="number" id="setProfitRate" step="0.1" oninput="onSettingEdit()">
+          <div class="muted" style="margin-top:6px">每日记账「利润率「仅食材」」的默认填充值</div></div>
+        <div class="field"><label>默认房租（每月）</label>
+          <input type="number" id="setRent" oninput="onSettingEdit()"></div>
+      </div>
+      <div class="row grid2" style="margin-top:12px">
+        <div class="field"><label>默认水电费（每月）</label>
+          <input type="number" id="setUtility" oninput="onSettingEdit()"></div>
+        <div class="field"><label>默认员工工资（每月）</label>
+          <input type="number" id="setWage" oninput="onSettingEdit()"></div>
+      </div>
+      <div class="hint">食材利润率默认；房租/水电/工资为月度固定成本默认值，各月可在「月度统计」中单独调整。</div>
+    </div>
+    <div class="card">
+      <h2>🗄️ 数据管理</h2>
+      <p class="muted" style="margin-bottom:12px">所有数据保存在本机浏览器中。建议每月导出备份一次，换电脑或清缓存前务必先导出。</p>
+      <div class="actions">
+        <button class="btn ghost" onclick="exportData()">导出备份 (JSON)</button>
+        <button class="btn ghost" onclick="importData()">导入备份 (JSON)</button>
+        <button class="btn ghost" onclick="clearAll()" style="color:var(--red);border-color:var(--red)">清空全部数据</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="doImport(event)">
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='bakery_ledger_v2';
+const BLOCKS={
+  A:{key:'A',title:'🍞 堂食与画室',base:'r',baseLabel:'营业额',channels:[{k:'dinein',n:'堂食'},{k:'studio',n:'画室'}]},
+  B:{key:'B',title:'📦 美团 / 外卖 / 京东',base:'n',baseLabel:'到手价',channels:[{k:'meituan',n:'美团'},{k:'waimai',n:'外卖'},{k:'jd',n:'京东'}]}
+};
+const CH_ALL=BLOCKS.A.channels.concat(BLOCKS.B.channels);
+function blockBase(k){for(const b of [BLOCKS.A,BLOCKS.B]){const c=b.channels.find(x=>x.k===k);if(c)return b.base;}return 'r';}
+function useM(m){return (m===''||m==null)?S.settings.profitRate:m;}
+function calcProfitSimple(base,m){const b=num(base),M=num(m);return b*M/100;}
+const CATS=['食材','店铺日用品','慰劳员工','客户售后','营销费用','节日装扮','其他'];
+const TRASH_DAYS=21;
+let S=load();
+
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.funds)return Object.assign(def(),d);}catch(e){}return def()}
+function def(){return{settings:{profitRate:60,rent:0,utility:0,wage:0},
+  draft:{},records:[],monthly:{},
+  funds:{working:0,original:0,fixed:0,updated:'',ledger:[]},purchase:[],trash:[]}}
+function save(){localStorage.setItem(KEY,JSON.stringify(S));toast('已保存')}
+function num(v){const n=parseFloat((''+v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n}
+function ym(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function ymd(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),da=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${da}`}
+function today(){return ymd(new Date())}
+function daysAgoStr(n){const d=new Date();d.setDate(d.getDate()-n);return ymd(d)}
+function ageDays(s){const a=new Date(s+'T00:00:00'),b=new Date(today()+'T00:00:00');return Math.floor((b-a)/86400000)}
+function money(v){return '¥'+num(v).toLocaleString('zh-CN',{maximumFractionDigits:2})}
+function q(s){return document.querySelector(s)}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1600)}
+function esc(s){return (s||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));}
+function stat(k,v){return `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`}
+
+/* ---------- 每日 ---------- */
+function getDraft(date){return S.draft[date]||{ch:{}}}
+function chDraft(day,k){return ((day.ch||{})[k])||{}}
+function readChInput(k){const base=blockBase(k);
+  const bi=q(`input[data-ch="${k}"][data-f="${base}"]`);
+  const mi=q(`input[data-ch="${k}"][data-f="m"]`);
+  return {r:base==='r'?(bi?bi.value:''):'', n:base==='n'?(bi?bi.value:''):'', m:mi?mi.value:''};}
+function renderDaily(){
+  const date=document.getElementById('dailyDate').value||today();
+  document.getElementById('dailyDate').value=date;
+  document.getElementById('dailyDateLabel').textContent=date;
+  document.getElementById('blockA').innerHTML=renderBlock(BLOCKS.A);
+  document.getElementById('blockB').innerHTML=renderBlock(BLOCKS.B);
+  updateDayComputed();
+}
+function renderBlock(block){
+  const date=document.getElementById('dailyDate').value;
+  const day=getDraft(date);
+  let html=`<h2>${block.title}</h2>`;
+  html+=`<table><thead><tr><th>渠道</th><th>${block.baseLabel}</th><th>利润率(%)</th><th>利润</th></tr></thead><tbody>`;
+  block.channels.forEach(c=>{const d=chDraft(day,c.k);
+    const profit=calcProfitSimple(d[block.base],useM(d.m));
+    html+=`<tr><td>${c.n}</td>`+
+      `<td><input type="number" step="0.01" value="${d[block.base]||''}" data-ch="${c.k}" data-f="${block.base}" oninput="onDayInput()"></td>`+
+      `<td><input type="number" step="0.1" placeholder="${S.settings.profitRate}" value="${d.m||''}" data-ch="${c.k}" data-f="m" oninput="onDayInput()"></td>`+
+      `<td><span id="profit_${c.k}" class="${profit<0?'neg':'pos'}">${money(profit)}</span></td></tr>`;});
+  html+=`</tbody></table>`;
+  html+=`<div class="actions" style="margin-top:12px"><button class="btn" onclick="saveBlock('${block.key}')">保存为明细（清空方框）</button></div>`;
+  return html;
+}
+function onDayInput(){
+  const date=document.getElementById('dailyDate').value;
+  const ch={};CH_ALL.forEach(c=>{ch[c.k]=readChInput(c.k);});
+  S.draft[date]={ch};
+  clearTimeout(window._ds);window._ds=setTimeout(save,600);
+  updateDayComputed();
+}
+function updateDayComputed(){
+  let tr=0,tn=0,tp=0;
+  CH_ALL.forEach(c=>{const base=blockBase(c.k);
+    const bi=q(`input[data-ch="${c.k}"][data-f="${base}"]`);
+    const mi=q(`input[data-ch="${c.k}"][data-f="m"]`);
+    if(!bi)return;const bv=num(bi.value),m=useM(mi?mi.value:'');
+    const profit=calcProfitSimple(bv,m);
+    const span=document.getElementById('profit_'+c.k);
+    if(span){span.textContent=money(profit);span.className=profit<0?'neg':'pos';}
+    if(base==='r')tr+=bv;else tn+=bv;tp+=profit;});
+  document.getElementById('dailySummary').innerHTML=
+    stat('总营业额',money(tr))+stat('总到手价',money(tn))+
+    stat('已算利润',money(tp))+stat('渠道数',CH_ALL.length+' 个');
+}
+function saveBlock(key){
+  const block=BLOCKS[key];const date=document.getElementById('dailyDate').value;
+  const day=getDraft(date);let count=0;
+  block.channels.forEach(c=>{const d=chDraft(day,c.k);
+    const base=num(d[block.base]),m=useM(d.m);
+    if(base<=0)return;
+    const profit=calcProfitSimple(base,m);
+    S.records=S.records||[];
+    S.records.push({id:'r'+Date.now()+'_'+c.k+'_'+count,date,ch:c.k,name:c.n,
+      r:block.base==='r'?base:0,n:block.base==='n'?base:0,cost:0,m:num(m),profit});
+    count++;});
+  if(!count){toast('请先填写数据再保存');return;}
+  block.channels.forEach(c=>{if(day.ch[c.k])delete day.ch[c.k];});
+  S.draft[date]=day;save();
+  renderDaily();renderRecords();renderMonthly();renderFunds();toast('已保存 '+count+' 条明细');
+}
+function renderRecords(){
+  const m=document.getElementById('recMonth').value||ym(new Date());
+  document.getElementById('recMonth').value=m;
+  const list=(S.records||[]).filter(r=>(r.date||'').startsWith(m))
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.ch||'').localeCompare(a.ch||''));
+  const tb=q('#recordTable tbody');tb.innerHTML='';let tot=0;
+  list.forEach(rec=>{tot+=num(rec.profit);
+    tb.innerHTML+=`<tr><td>${rec.date}</td><td>${rec.name||rec.ch||''}</td>
+      <td>${money(rec.r)}</td><td>${money(rec.n)}</td>
+      <td class="${rec.profit<0?'neg':'pos'}">${money(rec.profit)}</td>
+      <td><button class="btn ghost sm" onclick="delRecord('${rec.id}')">删</button></td></tr>`;});
+  if(!list.length)tb.innerHTML='<tr><td colspan="6" class="muted">本月暂无明细</td></tr>';
+  q('#recordTable tfoot').innerHTML=`<tr class="tot"><td>合计</td><td colspan="3">${list.length} 条</td><td>${money(tot)}</td><td></td></tr>`;
+  document.getElementById('recMonthTotal').value=money(tot);
+}
+function delRecord(id){const rec=(S.records||[]).find(r=>r.id===id);if(!rec)return;
+  addToTrash('record',rec,'记账 '+rec.date+' '+(rec.name||rec.ch));
+  S.records=S.records.filter(r=>r.id!==id);save();
+  renderRecords();renderMonthly();renderFunds();toast('已移入回收站');}
+
+/* ---------- 月度 ---------- */
+function monthPurchaseDefault(m){return (S.purchase||[]).filter(p=>(p.date||'').startsWith(m)).reduce((s,p)=>s+num(p.amount),0);}
+function getMonthCosts(m){if(S.monthly[m])return S.monthly[m];
+  return {rent:num(S.settings.rent),utility:num(S.settings.utility),wage:num(S.settings.wage),purchase:monthPurchaseDefault(m)};}
+function renderMonthly(){
+  const m=document.getElementById('monthPick').value||ym(new Date());
+  document.getElementById('monthPick').value=m;
+  document.getElementById('monthLabel').textContent=m;
+  const mc=getMonthCosts(m);
+  document.getElementById('mRent').value=mc.rent;
+  document.getElementById('mUtility').value=mc.utility;
+  document.getElementById('mWage').value=mc.wage;
+  document.getElementById('mPurchase').value=mc.purchase;
+  const fixed=mc.rent+mc.utility+mc.wage;
+  const costTotal=fixed+mc.purchase;
+  document.getElementById('monthCostTotal').value=money(costTotal);
+  document.getElementById('monthFixedTotal').value=money(fixed);
+  const recs=(S.records||[]).filter(r=>(r.date||'').startsWith(m));
+  let tr=0,tn=0,tc=0,tp=0;const dayMap={};
+  recs.forEach(r=>{tr+=num(r.r);tn+=num(r.n);tc+=num(r.cost);tp+=num(r.profit);
+    if(!dayMap[r.date])dayMap[r.date]={dr:0,dn:0,dc:0,dp:0};
+    dayMap[r.date].dr+=num(r.r);dayMap[r.date].dn+=num(r.n);
+    dayMap[r.date].dc+=num(r.cost);dayMap[r.date].dp+=num(r.profit);});
+  const net=tp-costTotal;
+  document.getElementById('monthSummary').innerHTML=
+    stat('总营业额',money(tr))+stat('总到手价',money(tn))+
+    stat('总产品成本',money(tc))+stat('总利润(毛利)',money(tp))+
+    `<div class="stat"><div class="k">月净利润</div><div class="v ${net<0?'neg':'pos'}">${money(net)}</div></div>`;
+  document.getElementById('monthNet').value=money(net);
+  const days=Object.keys(dayMap).sort();
+  const bars=document.getElementById('monthBars');bars.innerHTML='';
+  const max=Math.max(1,...days.map(d=>dayMap[d].dp));
+  days.forEach(d=>{const h=Math.max(2,(dayMap[d].dp/max)*140);
+    const b=document.createElement('div');b.className='bar';b.style.height=h+'px';
+    b.title=d+'：'+money(dayMap[d].dp);b.innerHTML=`<span>${d.slice(5)}</span>`;bars.appendChild(b);});
+  const tb=q('#monthTable tbody');tb.innerHTML='';
+  days.forEach(d=>{const x=dayMap[d];tb.innerHTML+=`<tr><td>${d}</td><td>${money(x.dr)}</td><td>${money(x.dn)}</td><td>${money(x.dc)}</td><td class="${x.dp<0?'neg':'pos'}">${money(x.dp)}</td></tr>`;});
+  q('#monthTable tfoot').innerHTML=`<tr class="tot"><td>合计</td><td>${money(tr)}</td><td>${money(tn)}</td><td>${money(tc)}</td><td class="${tp<0?'neg':'pos'}">${money(tp)}</td></tr>`;
+}
+function onMonthCostEdit(){
+  const m=document.getElementById('monthPick').value;
+  S.monthly[m]={rent:num(document.getElementById('mRent').value),
+    utility:num(document.getElementById('mUtility').value),
+    wage:num(document.getElementById('mWage').value),
+    purchase:num(document.getElementById('mPurchase').value)};
+  renderMonthly();save();
+}
+function exportMonthCSV(){
+  const m=document.getElementById('monthPick').value;
+  let csv='日期,渠道,营业额,到手价,产品成本,利润\n';
+  (S.records||[]).filter(r=>(r.date||'').startsWith(m)).forEach(r=>{
+    csv+=`${r.date},${r.name||r.ch},${r.r},${r.n},${r.cost},${r.profit}\n`;});
+  download(m+'_记账.csv',csv);
+}
+
+/* ---------- 资金 ---------- */
+function renderFunds(){
+  const f=S.funds||{};
+  document.getElementById('fWorking').value=f.working||0;
+  document.getElementById('fFixed').value=f.fixed||0;
+  document.getElementById('fOriginal').value=f.original||0;
+  document.getElementById('fundTotal').textContent=money(num(f.original)||0);
+  document.getElementById('fundUsable').textContent=money(num(f.working)||0);
+  document.getElementById('fundFixed').textContent=money(num(f.fixed)||0);
+  document.getElementById('fundUpdated').textContent=f.updated||'—';
+  const tb=q('#ledgerTable tbody');tb.innerHTML='';
+  (S.funds.ledger||[]).slice().reverse().forEach((l,i)=>{
+    const real=S.funds.ledger.length-1-i;
+    const name={working:'流动资金',original:'店铺原始资金',fixed:'不动资金'}[l.type]||l.type;
+    tb.innerHTML+=`<tr><td>${l.date}</td><td>${name}</td>
+      <td class="${l.amt<0?'neg':'pos'}">${l.amt<0?money(l.amt):'+'+money(l.amt)}</td>
+      <td>${l.note||''}</td><td><button class="btn ghost sm" onclick="delLedger(${real})">删</button></td></tr>`;});
+}
+function onFundEdit(){
+  S.funds=S.funds||{};
+  S.funds.working=num(document.getElementById('fWorking').value);
+  S.funds.fixed=num(document.getElementById('fFixed').value);
+  S.funds.original=num(document.getElementById('fOriginal').value);
+  S.funds.updated=today();clearTimeout(window._fs);window._fs=setTimeout(save,500);
+  document.getElementById('fundTotal').textContent=money(num(S.funds.original)||0);
+  document.getElementById('fundUsable').textContent=money(num(S.funds.working)||0);
+  document.getElementById('fundFixed').textContent=money(num(S.funds.fixed)||0);
+}
+function resetFund(type){
+  const name={working:'流动资金',fixed:'不动资金',original:'店铺原始资金'}[type]||type;
+  if(!confirm('将「'+name+'」清零？原数值进入回收站，可恢复。'))return;
+  addToTrash('fund',{type,value:num(S.funds[type])},'资金 '+name+' 清零');
+  S.funds[type]=0;S.funds.updated=today();save();renderFunds();toast('已清零并移入回收站');
+}
+function addLedger(){
+  const date=document.getElementById('ledgerDate').value||today();
+  const type=document.getElementById('ledgerType').value;
+  const amt=num(document.getElementById('ledgerAmt').value);
+  const note=document.getElementById('ledgerNote').value;
+  if(amt===0){toast('请输入变动金额');return;}
+  S.funds.ledger=S.funds.ledger||[];S.funds.ledger.push({date,type,amt,note});
+  if(type==='working')S.funds.working=num(S.funds.working)+amt;
+  else if(type==='fixed')S.funds.fixed=num(S.funds.fixed)+amt;
+  else if(type==='original')S.funds.original=num(S.funds.original)+amt;
+  S.funds.updated=date;save();renderFunds();toast('已记录');
+}
+function delLedger(i){
+  const l=S.funds.ledger[i];
+  const name={working:'流动资金',original:'店铺原始资金',fixed:'不动资金'}[l.type]||l.type;
+  addToTrash('ledger',l,'资金变动 '+l.date+' '+name+' '+(l.amt<0?money(l.amt):'+'+money(l.amt)));
+  if(l.type==='working')S.funds.working-=l.amt;
+  else if(l.type==='fixed')S.funds.fixed-=l.amt;
+  else if(l.type==='original')S.funds.original-=l.amt;
+  S.funds.ledger.splice(i,1);save();renderFunds();
+}
+
+/* ---------- 进货清单 ---------- */
+function fillCatSelect(){const sel=document.getElementById('purCat');
+  if(sel.options.length)return;CATS.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}
+function guessCategory(name,use){
+  const t=(name+' '+use).toLowerCase();
+  const map={
+    食材:['面粉','糖','黄油','奶油','鸡蛋','牛奶','酵母','巧克力','水果','芝士','奶酪','坚果','食材','原料','馅','油','盐','发酵','可可','抹茶','咖啡','红豆','果酱','面包','吐司'],
+    店铺日用品:['包装','打包','盒','袋','纸巾','清洁','手套','口罩','耗材','日用品','围裙','工服','记号','标签','封口','保鲜','吸管','叉子','蜡烛','贺卡','打包盒','垃圾'],
+    慰劳员工:['员工','团建','聚餐','慰劳','奶茶','零食','下午茶','福利','团餐','饮料','点心'],
+    客户售后:['售后','补偿','赔偿','退换','赠品','补发','客诉','退货'],
+    营销费用:['营销','广告','推广','投放','小红书','抖音','宣传','海报','传单','促销','活动'],
+    节日装扮:['节日','装饰','装扮','圣诞','春节','灯笼','气球','鲜花','布置','元旦','中秋','国庆','情人节','万圣','新年']
+  };
+  for(const k in map){if(map[k].some(w=>t.includes(w)))return k;}
+  return '其他';
+}
+function autoCat(){fillCatSelect();
+  const g=guessCategory(document.getElementById('purName').value,document.getElementById('purUse').value);
+  document.getElementById('purCat').value=g;
+  document.getElementById('autoCatHint').textContent='自动识别分类：'+g+'（可手动修改）';}
+function renderPurchase(){
+  fillCatSelect();
+  const m=document.getElementById('purMonth').value||'';
+  let list=(S.purchase||[]).filter(p=>!m||(p.date||'').startsWith(m));
+  list.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const tb=q('#purTable tbody');tb.innerHTML='';
+  let total=0;const catSum={};
+  list.forEach(p=>{total+=num(p.amount);catSum[p.cat=p.cat||'其他']=(catSum[p.cat]||0)+num(p.amount);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${p.date||''}</td><td>${esc(p.name)}</td><td>${esc(p.weight||'')}</td><td>${esc(p.use||'')}</td>
+      <td><span class="pill n">${p.cat}</span></td>
+      <td>${esc(p.channel||'')}</td><td>${money(p.amount)}</td>
+      <td><button class="btn ghost sm" onclick="delPurchase('${p.id}')">删</button></td>`;
+    tb.appendChild(tr);});
+  q('#purTable tfoot').innerHTML=
+    `<tr class="tot"><td colspan="5">合计（${list.length} 项）</td><td>${money(total)}</td><td></td></tr>`;
+  document.getElementById('purMonthTotal').value=money(total);
+  let html='';CATS.forEach(c=>{if(catSum[c])html+=stat(c,money(catSum[c]));});
+  document.getElementById('purCatSummary').innerHTML=html||stat('暂无数据','¥0.00');
+}
+function addPurchase(){
+  fillCatSelect();
+  const name=document.getElementById('purName').value.trim();
+  const amount=num(document.getElementById('purAmt').value);
+  if(!name){toast('请填写名称');return;}
+  if(amount===0){toast('请填写金额');return;}
+  S.purchase=S.purchase||[];
+  S.purchase.push({id:'p'+Date.now(),name,weight:document.getElementById('purWeight').value.trim(),
+    use:document.getElementById('purUse').value.trim(),
+    amount,date:document.getElementById('purDate').value||today(),
+    channel:document.getElementById('purChannel').value,cat:document.getElementById('purCat').value});
+  save();
+  document.getElementById('purName').value='';document.getElementById('purWeight').value='';document.getElementById('purUse').value='';
+  document.getElementById('purAmt').value='';
+  document.getElementById('autoCatHint').textContent='输入名称或用途后将自动判断分类，也可手动选择。';
+  renderPurchase();toast('已添加');
+}
+function delPurchase(id){const item=(S.purchase||[]).find(p=>p.id===id);
+  if(!item)return;
+  addToTrash('purchase',item,'进货 '+item.date+' '+item.name);
+  S.purchase=S.purchase.filter(p=>p.id!==id);save();renderPurchase();toast('已移入回收站');}
+function exportPurchaseCSV(){
+  const m=document.getElementById('purMonth').value||'';
+  let list=(S.purchase||[]).filter(p=>!m||(p.date||'').startsWith(m));
+  let csv='日期,名称,重量/数量,用途,分类,下单途径,金额\n';
+  list.forEach(p=>{csv+=`${p.date},${p.name},${p.weight||''},${p.use||''},${p.cat},${p.channel||''},${p.amount}\n`;});
+  download((m||'全部')+'_进货清单.csv',csv);
+}
+
+/* ---------- 回收站 ---------- */
+function addToTrash(type,data,label){S.trash=S.trash||[];S.trash.push({id:'t'+Date.now(),type,data,label,deletedAt:today()});}
+function purgeTrash(){if(!S.trash)return;const cut=daysAgoStr(TRASH_DAYS);S.trash=S.trash.filter(t=>t.deletedAt>=cut);}
+function trashType(t){return {record:'记账明细',purchase:'进货',ledger:'资金变动',fund:'资金'}[t]||t;}
+function renderTrash(){purgeTrash();const tb=q('#trashTable tbody');tb.innerHTML='';
+  if(!S.trash||!S.trash.length){tb.innerHTML='<tr><td colspan="5" class="muted">回收站为空</td></tr>';return;}
+  S.trash.slice().reverse().forEach(t=>{const left=TRASH_DAYS-ageDays(t.deletedAt);
+    tb.innerHTML+=`<tr><td>${t.deletedAt}</td><td>${trashType(t.type)}</td><td>${esc(t.label)}</td>
+      <td>${left}</td><td><button class="btn ghost sm" onclick="restoreTrash('${t.id}')">恢复</button>
+      <button class="btn ghost sm" onclick="permDelete('${t.id}')" style="color:var(--red)">永久删</button></td></tr>`;});}
+function restoreTrash(id){const i=(S.trash||[]).findIndex(t=>t.id===id);if(i<0)return;const t=S.trash[i];
+  if(t.type==='record'){S.records=S.records||[];S.records.push(t.data);}
+  else if(t.type==='purchase'){S.purchase=S.purchase||[];S.purchase.push(t.data);}
+  else if(t.type==='ledger'){S.funds.ledger=S.funds.ledger||[];S.funds.ledger.push(t.data);
+    if(t.data.type==='working')S.funds.working=num(S.funds.working)+num(t.data.amt);
+    else S.funds.fixedBase=num(S.funds.fixedBase)+num(t.data.amt);}
+  else if(t.type==='fund'){S.funds[t.data.type]=num(t.data.value);}
+  S.trash.splice(i,1);save();renderTrash();renderRecords();renderMonthly();renderFunds();toast('已恢复');}
+function permDelete(id){S.trash=S.trash.filter(t=>t.id!==id);save();renderTrash();toast('已永久删除');}
+
+/* ---------- 设置 ---------- */
+function renderSettings(){
+  document.getElementById('setProfitRate').value=S.settings.profitRate;
+  document.getElementById('setRent').value=S.settings.rent;
+  document.getElementById('setUtility').value=S.settings.utility;
+  document.getElementById('setWage').value=S.settings.wage;
+}
+function onSettingEdit(){
+  S.settings.profitRate=num(document.getElementById('setProfitRate').value);
+  S.settings.rent=num(document.getElementById('setRent').value);
+  S.settings.utility=num(document.getElementById('setUtility').value);
+  S.settings.wage=num(document.getElementById('setWage').value);
+  save();
+}
+
+/* ---------- 工具 ---------- */
+function switchTab(t){
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  ['daily','monthly','funds','purchase','trash','settings'].forEach(s=>
+    document.getElementById('tab-'+s).style.display=(s===t?'block':'none'));
+  if(t==='daily'){renderDaily();renderRecords();}
+  if(t==='monthly')renderMonthly();
+  if(t==='funds')renderFunds();
+  if(t==='purchase')renderPurchase();
+  if(t==='trash')renderTrash();
+  if(t==='settings')renderSettings();
+}
+function exportData(){download('烘焙记账备份_'+today()+'.json',JSON.stringify(S,null,2))}
+function importData(){document.getElementById('importFile').click()}
+function doImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{S=Object.assign(def(),JSON.parse(r.result));save();toast('导入成功');switchTab('daily')}catch(err){toast('文件格式错误')}}
+  r.readAsText(f);e.target.value='';}
+function clearAll(){if(confirm('确定清空全部数据（含回收站）？此操作不可恢复，建议先导出备份。')){
+  S=def();localStorage.removeItem(KEY);save();toast('已清空');switchTab('daily')}}
+function download(name,content){const blob=new Blob([content],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  URL.revokeObjectURL(a.href);}
+
+/* init */
+purgeTrash();
+document.getElementById('dailyDate').value=today();
+document.getElementById('monthPick').value=ym(new Date());
+document.getElementById('ledgerDate').value=today();
+document.getElementById('purMonth').value=ym(new Date());
+document.getElementById('recMonth').value=ym(new Date());
+document.getElementById('purDate').value=today();
+fillCatSelect();renderPurchase();renderDaily();renderSettings();renderRecords();
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
