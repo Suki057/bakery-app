@@ -66,7 +66,7 @@
   .card h2 .tag{font-size:9px;background:rgba(207,249,128,0.5);color:#3E5A22;
     padding:3px 10px;border-radius:20px;font-weight:600;backdrop-filter:blur(6px)}
   label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600}
-  input,select{width:100%;padding:11px 14px;border:1px solid var(--edge);
+  input,select{width:100%;padding:7px 10px;border:1px solid var(--edge);
     border-radius:14px;font-size:13px;background:rgba(255,255,255,0.45);color:var(--ink);outline:none;
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.9), inset 0 1px 2px rgba(255,255,255,0.5),0 2px 8px rgba(0,0,0,0.04);
     transition:.18s}
@@ -78,9 +78,9 @@
   @media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
   .field{position:relative}
   table{width:100%;border-collapse:collapse;font-size:12px}
-  th,td{padding:11px 10px;text-align:right;border-bottom:1px solid rgba(123,123,140,0.1)}
+  th,td{padding:8px 8px;text-align:right;vertical-align:top;border-bottom:1px solid rgba(123,123,140,0.1)}
   th:first-child,td:first-child{text-align:left}
-  th{color:var(--muted);font-weight:700;font-size:10px;background:rgba(255,231,151,0.22);
+  th{color:var(--muted);font-weight:700;font-size:10px;text-align:left;background:rgba(255,231,151,0.22);
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
   tr.tot td{font-weight:800;border-top:2px solid rgba(123,123,140,0.12)}
   .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;
@@ -170,10 +170,10 @@
         <input type="date" id="dailyDate" onchange="renderDaily()"></div>
       <div id="blockA"></div>
       <div id="blockB" style="margin-top:18px"></div>
-      <div class="hint">填各渠道数据后，利润按公式自动算：堂食/画室 = 营业额×利润率；美团/外卖/京东 = 到手价×利润率。点板块「保存为明细」把有数据的行存入下方明细并清空方框。</div>
+      <div class="hint">填各渠道数据后，利润按公式自动算：堂食/画室 = 营业额×利润率；美团/闪购/京东 = 到手价×利润率。点板块「保存为明细」把有数据的行存入下方明细并清空方框。</div>
     </div>
     <div class="card">
-      <h2>📊 当前录入合计</h2>
+      <h2>📊 当日营业额</h2>
       <div class="summary" id="dailySummary"></div>
     </div>
     <div class="card">
@@ -382,11 +382,15 @@
 <script>
 const KEY='bakery_ledger_v2';
 const BLOCKS={
-  A:{key:'A',title:'🍞 堂食与画室',base:'r',baseLabel:'营业额',channels:[{k:'dinein',n:'堂食'},{k:'studio',n:'画室'}]},
-  B:{key:'B',title:'📦 美团 / 外卖 / 京东',base:'n',baseLabel:'到手价',channels:[{k:'meituan',n:'美团'},{k:'waimai',n:'外卖'},{k:'jd',n:'京东'}]}
+  A:{key:'A',title:'🍞 堂食与画室',profitBase:'r',
+     cols:[{f:'r',label:'营业额'},{f:'m',label:'利润率(%)'}],
+     channels:[{k:'dinein',n:'堂食',sum:true},{k:'studio',n:'画室',sum:false}]},
+  B:{key:'B',title:'📦 线上外卖',profitBase:'n',
+     cols:[{f:'r',label:'营业额'},{f:'n',label:'到手价'},{f:'m',label:'利润率(%)'}],
+     channels:[{k:'meituan',n:'美团',sum:true},{k:'flash',n:'闪购',sum:true},{k:'jd',n:'京东',sum:true}]}
 };
 const CH_ALL=BLOCKS.A.channels.concat(BLOCKS.B.channels);
-function blockBase(k){for(const b of [BLOCKS.A,BLOCKS.B]){const c=b.channels.find(x=>x.k===k);if(c)return b.base;}return 'r';}
+function blockOf(k){for(const b of [BLOCKS.A,BLOCKS.B]){if(b.channels.find(x=>x.k===k))return b;}return BLOCKS.A;}
 function useM(m){return (m===''||m==null)?S.settings.profitRate:m;}
 function calcProfitSimple(base,m){const b=num(base),M=num(m);return b*M/100;}
 const CATS=['食材','店铺日用品','慰劳员工','客户售后','营销费用','节日装扮','其他'];
@@ -413,10 +417,11 @@ function stat(k,v){return `<div class="stat"><div class="k">${k}</div><div class
 /* ---------- 每日 ---------- */
 function getDraft(date){return S.draft[date]||{ch:{}}}
 function chDraft(day,k){return ((day.ch||{})[k])||{}}
-function readChInput(k){const base=blockBase(k);
-  const bi=q(`input[data-ch="${k}"][data-f="${base}"]`);
+function readChInput(k){
+  const ri=q(`input[data-ch="${k}"][data-f="r"]`);
+  const ni=q(`input[data-ch="${k}"][data-f="n"]`);
   const mi=q(`input[data-ch="${k}"][data-f="m"]`);
-  return {r:base==='r'?(bi?bi.value:''):'', n:base==='n'?(bi?bi.value:''):'', m:mi?mi.value:''};}
+  return {r:ri?ri.value:'', n:ni?ni.value:'', m:mi?mi.value:''};}
 function renderDaily(){
   const date=document.getElementById('dailyDate').value||today();
   document.getElementById('dailyDate').value=date;
@@ -429,13 +434,16 @@ function renderBlock(block){
   const date=document.getElementById('dailyDate').value;
   const day=getDraft(date);
   let html=`<h2>${block.title}</h2>`;
-  html+=`<table><thead><tr><th>渠道</th><th>${block.baseLabel}</th><th>利润率(%)</th><th>利润</th></tr></thead><tbody>`;
+  html+=`<table><thead><tr><th>渠道</th>`;
+  block.cols.forEach(col=>{html+=`<th>${col.label}</th>`;});
+  html+=`<th>利润</th></tr></thead><tbody>`;
   block.channels.forEach(c=>{const d=chDraft(day,c.k);
-    const profit=calcProfitSimple(d[block.base],useM(d.m));
-    html+=`<tr><td>${c.n}</td>`+
-      `<td><input type="number" step="0.01" value="${d[block.base]||''}" data-ch="${c.k}" data-f="${block.base}" oninput="onDayInput()"></td>`+
-      `<td><input type="number" step="0.1" placeholder="${S.settings.profitRate}" value="${d.m||''}" data-ch="${c.k}" data-f="m" oninput="onDayInput()"></td>`+
-      `<td><span id="profit_${c.k}" class="${profit<0?'neg':'pos'}">${money(profit)}</span></td></tr>`;});
+    const profit=calcProfitSimple(d[block.profitBase],useM(d.m));
+    html+=`<tr><td>${c.n}</td>`;
+    block.cols.forEach(col=>{const ph=col.f==='m'?S.settings.profitRate:'';
+      const step=col.f==='m'?'0.1':'0.01';
+      html+=`<td><input type="number" step="${step}" placeholder="${ph}" value="${d[col.f]||''}" data-ch="${c.k}" data-f="${col.f}" oninput="onDayInput()"></td>`;});
+    html+=`<td><span id="profit_${c.k}" class="${profit<0?'neg':'pos'}">${money(profit)}</span></td></tr>`;});
   html+=`</tbody></table>`;
   html+=`<div class="actions" style="margin-top:12px"><button class="btn" onclick="saveBlock('${block.key}')">保存为明细（清空方框）</button></div>`;
   return html;
@@ -448,29 +456,36 @@ function onDayInput(){
   updateDayComputed();
 }
 function updateDayComputed(){
-  let tr=0,tn=0,tp=0;
-  CH_ALL.forEach(c=>{const base=blockBase(c.k);
+  let dailyTurnover=0,actualTurnover=0,actualProfit=0,cnt=0;
+  CH_ALL.forEach(c=>{const block=blockOf(c.k);const base=block.profitBase;
     const bi=q(`input[data-ch="${c.k}"][data-f="${base}"]`);
     const mi=q(`input[data-ch="${c.k}"][data-f="m"]`);
     if(!bi)return;const bv=num(bi.value),m=useM(mi?mi.value:'');
     const profit=calcProfitSimple(bv,m);
     const span=document.getElementById('profit_'+c.k);
     if(span){span.textContent=money(profit);span.className=profit<0?'neg':'pos';}
-    if(base==='r')tr+=bv;else tn+=bv;tp+=profit;});
+    if(c.sum){
+      const ri=q(`input[data-ch="${c.k}"][data-f="r"]`);
+      dailyTurnover+=num(ri?ri.value:0);
+      actualTurnover+=bv;
+      actualProfit+=profit;
+      cnt++;
+    }});
   document.getElementById('dailySummary').innerHTML=
-    stat('总营业额',money(tr))+stat('总到手价',money(tn))+
-    stat('已算利润',money(tp))+stat('渠道数',CH_ALL.length+' 个');
+    stat('总营业额',money(dailyTurnover))+stat('实际营业额',money(actualTurnover))+
+    stat('实际利润',money(actualProfit))+stat('记账渠道',cnt+' 个');
 }
 function saveBlock(key){
   const block=BLOCKS[key];const date=document.getElementById('dailyDate').value;
   const day=getDraft(date);let count=0;
   block.channels.forEach(c=>{const d=chDraft(day,c.k);
-    const base=num(d[block.base]),m=useM(d.m);
+    const base=num(d[block.profitBase]),m=useM(d.m);
     if(base<=0)return;
     const profit=calcProfitSimple(base,m);
     S.records=S.records||[];
     S.records.push({id:'r'+Date.now()+'_'+c.k+'_'+count,date,ch:c.k,name:c.n,
-      r:block.base==='r'?base:0,n:block.base==='n'?base:0,cost:0,m:num(m),profit});
+      r:block.profitBase==='r'?base:num(d.r),n:block.profitBase==='n'?base:num(d.n),
+      cost:0,m:num(m),profit});
     count++;});
   if(!count){toast('请先填写数据再保存');return;}
   block.channels.forEach(c=>{if(day.ch[c.k])delete day.ch[c.k];});
