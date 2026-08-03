@@ -126,6 +126,11 @@
     padding:12px 14px;border-radius:16px;margin-top:10px;line-height:1.6;border:1px solid var(--edge);
     box-shadow:var(--shadow);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     position:relative;overflow:hidden}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:16px;border:1px solid var(--edge);background:rgba(255,255,255,0.12)}
+  .table-wrap table{min-width:720px;font-size:11px}
+  .table-wrap th,.table-wrap td{padding:7px 8px;white-space:nowrap}
+  .table-wrap th{background:rgba(255,231,151,0.22)}
+  .table-wrap td .small{display:block;font-size:9px;color:var(--muted)}
   .hint::before{content:'';position:absolute;inset:0;border-radius:16px;background:var(--band);pointer-events:none;z-index:0}
   .toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
     background:rgba(47,47,58,0.82);color:#fff;padding:12px 22px;border-radius:16px;font-size:12px;
@@ -182,6 +187,17 @@
       <div class="field" style="margin-bottom:14px"><label>选择月份</label>
         <input type="month" id="monthTurnoverMonth" onchange="renderMonthTurnover()"></div>
       <div class="summary" id="monthTurnoverSummary"></div>
+    </div>
+    <div class="card">
+      <h2>📋 数据明细 <span class="tag">按日期聚合</span></h2>
+      <div class="table-wrap">
+        <table id="dailyDetailTable">
+          <thead><tr><th>日期</th><th>堂食</th><th>画室</th><th>美团</th><th>闪购</th><th>京东</th><th>当日合计</th></tr></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+      <div class="hint">本表展示所有已保存日期的各渠道数据。堂食/画室显示营业额+利润；美团/闪购/京东显示到手价+利润。</div>
     </div>
   </section>
 
@@ -422,7 +438,7 @@ function renderDaily(){
   document.getElementById('dailyDateLabel').textContent=date;
   document.getElementById('blockA').innerHTML=renderBlock(BLOCKS.A);
   document.getElementById('blockB').innerHTML=renderBlock(BLOCKS.B);
-  updateDayComputed();renderMonthTurnover();
+  updateDayComputed();renderMonthTurnover();renderDailyDetail();
 }
 function renderBlock(block){
   const date=document.getElementById('dailyDate').value;
@@ -449,8 +465,22 @@ function onDayInput(){
   clearTimeout(window._ds);window._ds=setTimeout(save,600);
   updateDayComputed();
 }
+function daySavedSummary(date){
+  const sum={dailyTurnover:0,actualTurnover:0,actualProfit:0,cnt:0};
+  (S.records||[]).filter(r=>r.date===date).forEach(r=>{
+    const block=blockOf(r.ch);const c=block.channels.find(x=>x.k===r.ch);
+    if(!c||!c.sum)return;
+    sum.dailyTurnover+=num(r.r);
+    sum.actualTurnover+=num(block.profitBase==='r'?r.r:r.n);
+    sum.actualProfit+=num(r.profit);
+    sum.cnt++;
+  });
+  return sum;
+}
 function updateDayComputed(){
-  let dailyTurnover=0,actualTurnover=0,actualProfit=0,cnt=0;
+  const date=document.getElementById('dailyDate').value;
+  const saved=daySavedSummary(date);
+  let dailyTurnover=saved.dailyTurnover,actualTurnover=saved.actualTurnover,actualProfit=saved.actualProfit,cnt=saved.cnt;
   CH_ALL.forEach(c=>{const block=blockOf(c.k);const base=block.profitBase;
     const bi=q(`input[data-ch="${c.k}"][data-f="${base}"]`);
     const mi=q(`input[data-ch="${c.k}"][data-f="m"]`);
@@ -458,7 +488,7 @@ function updateDayComputed(){
     const profit=calcProfitSimple(bv,m);
     const span=document.getElementById('profit_'+c.k);
     if(span){span.textContent=money(profit);span.className=profit<0?'neg':'pos';}
-    if(c.sum){
+    if(c.sum&&bv>0){
       const ri=q(`input[data-ch="${c.k}"][data-f="r"]`);
       dailyTurnover+=num(ri?ri.value:0);
       actualTurnover+=bv;
@@ -491,6 +521,38 @@ function renderMonthTurnover(){
   document.getElementById('monthTurnoverSummary').innerHTML=
     stat('总营业额',money(dailyTurnover))+stat('实际营业额',money(actualTurnover))+
     stat('实际利润',money(actualProfit))+stat('有记录天数',Object.keys(dayMap).length+' 天');
+}
+function renderDailyDetail(){
+  const tb=q('#dailyDetailTable tbody');const tf=q('#dailyDetailTable tfoot');
+  const dayMap={};
+  (S.records||[]).forEach(r=>{
+    if(!dayMap[r.date])dayMap[r.date]={};
+    dayMap[r.date][r.ch]={r:num(r.r),n:num(r.n),profit:num(r.profit)};
+  });
+  const dates=Object.keys(dayMap).sort((a,b)=>b.localeCompare(a));
+  if(!dates.length){tb.innerHTML='<tr><td colspan="7" class="muted">暂无已保存的明细</td></tr>';tf.innerHTML='';return;}
+  let total={dailyTurnover:0,actualTurnover:0,actualProfit:0};
+  tb.innerHTML='';
+  dates.forEach(d=>{
+    const m=dayMap[d];
+    let rowHtml=`<td>${d}</td>`;
+    let dayDaily=0,dayActual=0,dayProfit=0;
+    CH_ALL.forEach(c=>{
+      const block=blockOf(c.k);const v=m[c.k]||{r:0,n:0,profit:0};
+      const base=block.profitBase==='r'?v.r:v.n;
+      const label=block.profitBase==='r'?'营业额':'到手价';
+      rowHtml+=`<td><span class="pos">${money(v.profit)}</span><span class="small">${label} ${money(base)}</span></td>`;
+      if(c.sum){
+        dayDaily+=num(v.r);
+        dayActual+=base;
+        dayProfit+=num(v.profit);
+      }
+    });
+    rowHtml+=`<td><strong>${money(dayProfit)}</strong><span class="small">营业额 ${money(dayDaily)} / 实际 ${money(dayActual)}</span></td>`;
+    tb.innerHTML+=`<tr>${rowHtml}</tr>`;
+    total.dailyTurnover+=dayDaily;total.actualTurnover+=dayActual;total.actualProfit+=dayProfit;
+  });
+  tf.innerHTML=`<tr class="tot"><td>合计</td><td colspan="5"></td><td><strong>${money(total.actualProfit)}</strong><span class="small">营业额 ${money(total.dailyTurnover)} / 实际 ${money(total.actualTurnover)}</span></td></tr>`;
 }
 function saveBlock(key){
   const block=BLOCKS[key];const date=document.getElementById('dailyDate').value;
