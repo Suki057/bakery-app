@@ -227,7 +227,7 @@
     <div class="card">
       <h2>📊 月度统计 <span class="tag" id="monthLabel"></span></h2>
       <div class="summary" id="monthSummary"></div>
-      <div class="hint">当月实际利润 = 当月实际利润之和（来自每日记账）。毛利润 = 实际营业额 − 固定成本。资金月增收 = 实际营业额 − 成本合计。</div>
+      <div class="hint">当月实际利润 = 当月实际利润之和（来自每日记账）。毛利润 = 实际利润 − 固定成本合计。资金月增收 = 实际利润 − 成本合计。</div>
       <h2 style="margin-top:18px">当月每日利润趋势</h2>
       <div class="bars" id="monthBars"></div>
     </div>
@@ -592,12 +592,12 @@ function renderMonthly(){
   const dayMap=monthDayMap(m);
   let actualTurnover=0,actualProfit=0,dailyTurnover=0;
   Object.values(dayMap).forEach(d=>{actualTurnover+=d.actualTurnover;actualProfit+=d.actualProfit;dailyTurnover+=d.dailyTurnover;});
-  const gross=actualTurnover-fixed;
-  const fundGrowth=actualTurnover-costTotal;
+  const gross=actualProfit-fixed;
+  const fundGrowth=actualProfit-costTotal;
   document.getElementById('monthSummary').innerHTML=
-    stat('实际营业额',money(actualTurnover))+
-    stat('毛利润',money(gross))+
-    stat('资金月增收',money(fundGrowth))+
+    stat('实际利润',money(actualProfit))+
+    stat('毛利润<br><span style="font-size:9px;opacity:.7">（实际利润-固定成本合计）</span>',money(gross))+
+    stat('资金月增收<br><span style="font-size:9px;opacity:.7">（实际利润-成本合计）</span>',money(fundGrowth))+
     stat('记账天数',Object.keys(dayMap).length+' 天');
   document.getElementById('monthNet').value=money(actualProfit);
   const days=Object.keys(dayMap).sort();
