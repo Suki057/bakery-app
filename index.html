@@ -211,7 +211,7 @@
       <div class="row grid2" style="margin-bottom:12px">
         <div class="field"><label>选择月份（默认当月，可切换看历史）</label>
           <input type="month" id="monthPick" onchange="renderMonthly()"></div>
-        <div class="field"><label>当月实际利润</label>
+        <div class="field currency-field"><label>当月实际利润</label><span class="currency">¥</span>
           <input id="monthNet" disabled></div>
       </div>
       <div class="row grid2">
@@ -224,8 +224,8 @@
       </div>
       <div id="monthExtras" style="margin-top:12px"></div>
       <div class="row grid2" style="margin-top:12px">
-        <div class="field"><label>成本合计（房租+水电+工资+进货+其他）</label><input id="monthCostTotal" disabled></div>
-        <div class="field"><label>固定成本合计（房租+水电+工资）</label><input id="monthFixedTotal" disabled></div>
+        <div class="field currency-field"><label>成本合计（房租+水电+工资+进货+其他）</label><span class="currency">¥</span><input id="monthCostTotal" disabled></div>
+        <div class="field currency-field"><label>固定成本合计（房租+水电+工资）</label><span class="currency">¥</span><input id="monthFixedTotal" disabled></div>
       </div>
       <div class="actions" style="justify-content:flex-end;margin-top:14px">
         <button class="btn ghost sm" onclick="openAddExtraModal()">➕ 添加成本</button>
@@ -596,8 +596,8 @@ function renderMonthly(){
   const fixed=mc.rent+mc.utility+mc.wage;
   const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
   const costTotal=fixed+mc.purchase+extrasTotal;
-  document.getElementById('monthCostTotal').value=money(costTotal);
-  document.getElementById('monthFixedTotal').value=money(fixed);
+  document.getElementById('monthCostTotal').value=costTotal;
+  document.getElementById('monthFixedTotal').value=fixed;
   const dayMap=monthDayMap(m);
   let actualTurnover=0,actualProfit=0,dailyTurnover=0;
   Object.values(dayMap).forEach(d=>{actualTurnover+=d.actualTurnover;actualProfit+=d.actualProfit;dailyTurnover+=d.dailyTurnover;});
@@ -608,7 +608,7 @@ function renderMonthly(){
     stat('毛利润<br><span style="font-size:9px;opacity:.7">（实际利润-固定成本合计）</span>',money(gross))+
     stat('资金月增收<br><span style="font-size:9px;opacity:.7">（实际利润-成本合计）</span>',money(fundGrowth))+
     stat('记账天数',Object.keys(dayMap).length+' 天');
-  document.getElementById('monthNet').value=money(actualProfit);
+  document.getElementById('monthNet').value=actualProfit;
   const days=Object.keys(dayMap).sort();
   const bars=document.getElementById('monthBars');bars.innerHTML='';
   const max=Math.max(1,...days.map(d=>dayMap[d].actualProfit));
@@ -651,7 +651,7 @@ function onExtraEdit(i,v){
   const mc=getMonthCosts(m);
   const fixed=mc.rent+mc.utility+mc.wage;
   const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
-  document.getElementById('monthCostTotal').value=money(fixed+mc.purchase+extrasTotal);
+  document.getElementById('monthCostTotal').value=fixed+mc.purchase+extrasTotal;
   const dayMap=monthDayMap(m);
   let actualProfit=0;Object.values(dayMap).forEach(d=>actualProfit+=d.actualProfit);
   document.getElementById('monthSummary').innerHTML=
