@@ -283,19 +283,20 @@
           <button type="button" class="btn ghost sm" onclick="addFundItem('working')">➕ 添加</button>
         </div>
       </div>
+      <div class="fund-section">
+        <h3>📊 数据明细</h3>
+        <table id="fundDetailTable" style="margin-top:8px">
+          <thead><tr><th>日期</th><th>类型</th><th>资金账号</th><th>备注</th><th>资金金额</th></tr></thead>
+          <tbody id="fundDetailBody"></tbody>
+          <tfoot><tr><td colspan="4" style="text-align:right;font-weight:700;color:var(--muted)">合计</td><td id="fundDetailTotal" style="font-weight:700"></td></tr></tfoot>
+        </table>
+      </div>
       <div class="summary" style="margin-top:16px">
         <div class="stat"><div class="k">店铺原始资金</div><div class="v" id="fundTotal"></div></div>
         <div class="stat"><div class="k">可动用(流动资金)</div><div class="v" id="fundUsable"></div></div>
         <div class="stat"><div class="k">不动资金</div><div class="v" id="fundFixed"></div></div>
         <div class="stat"><div class="k">最近更新</div><div class="v" id="fundUpdated" style="font-size:14px"></div></div>
       </div>
-    </div>
-    <div class="card">
-      <h2>📝 资金变动记录</h2>
-      <table id="ledgerTable" style="margin-top:8px">
-        <thead><tr><th>日期</th><th>类型</th><th>变动</th><th>备注</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
     </div>
   </section>
 
@@ -753,13 +754,30 @@ function renderFunds(){
   document.getElementById('fundUpdated').textContent=f.updated||'—';
   renderFundItems('fixed');
   renderFundItems('working');
-  const tb=q('#ledgerTable tbody');tb.innerHTML='';
-  (S.funds.ledger||[]).slice().reverse().forEach((l,i)=>{
-    const real=S.funds.ledger.length-1-i;
-    const name={working:'流动资金',original:'店铺原始资金',fixed:'不动资金'}[l.type]||l.type;
-    tb.innerHTML+=`<tr><td>${l.date}</td><td>${name}</td>
-      <td class="${l.amt<0?'neg':'pos'}">${l.amt<0?money(l.amt):'+'+money(l.amt)}</td>
-      <td>${l.note||''}</td><td><button type="button" class="btn ghost sm" onclick="delLedger(${real})">删</button></td></tr>`;});}
+  renderFundDetail();
+}
+function renderFundDetail(){
+  const body=document.getElementById('fundDetailBody');
+  if(!body)return;
+  const list=[];
+  (S.funds.fixedItems||[]).forEach(it=>list.push(Object.assign({},it,{typeLabel:'不动资金'})));
+  (S.funds.workingItems||[]).forEach(it=>list.push(Object.assign({},it,{typeLabel:'流动资金'})));
+  list.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(!list.length){
+    body.innerHTML=`<tr><td colspan="5" class="muted" style="text-align:center;padding:10px">暂无资金记录</td></tr>`;
+    const ft=document.getElementById('fundDetailTotal');if(ft)ft.textContent=money(0);
+    return;
+  }
+  body.innerHTML='';
+  let total=0;
+  list.forEach(it=>{
+    const amt=num(it.amount);total+=amt;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${esc(it.date||'')}</td><td>${it.typeLabel}</td><td>${esc(it.account||'')}</td><td>${esc(it.remark||'')}</td><td>${money(amt)}</td>`;
+    body.appendChild(tr);
+  });
+  document.getElementById('fundDetailTotal').textContent=money(total);
+}
 function renderFundItems(type){
   const container=document.getElementById(type+'Items');
   const items=S.funds[type+'Items']||[];
