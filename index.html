@@ -649,6 +649,27 @@ function onExtraEdit(i,v){
     stat('资金月增收',money(actualProfit-fixed-mc.purchase-extrasTotal))+
     stat('记账天数',Object.keys(dayMap).length+' 天');
 }
+function showConfirm(msg, onYes){
+  if(window._confirmOpen)return;
+  const backdrop=document.createElement('div');
+  backdrop.className='modal-backdrop';
+  backdrop.id='confirmBackdrop';
+  backdrop.innerHTML=`<div class="modal">
+    <h2 style="font-size:15px;line-height:1.5">${esc(msg)}</h2>
+    <div class="actions" style="margin-top:18px;justify-content:flex-end">
+      <button class="btn ghost sm" onclick="closeConfirm(false)">取消</button>
+      <button class="btn sm" onclick="closeConfirm(true)">确定</button>
+    </div>
+  </div>`;
+  backdrop._onYes=onYes;
+  document.body.appendChild(backdrop);
+  window._confirmOpen=true;
+}
+function closeConfirm(yes){
+  const b=document.getElementById('confirmBackdrop');if(!b)return;
+  const fn=b._onYes;b.remove();window._confirmOpen=false;
+  if(yes && typeof fn==='function')fn();
+}
 function openAddExtraModal(){
   if(document.getElementById('extraModalBackdrop'))return;
   const backdrop=document.createElement('div');
@@ -681,11 +702,12 @@ function delExtra(i){
   const m=document.getElementById('monthPick').value;
   if(!S.monthly[m]||!S.monthly[m].extras||!S.monthly[m].extras[i])return;
   const item=S.monthly[m].extras[i];
-  if(!confirm('删除「'+item.name+'」？删除后可到回收站恢复。'))return;
-  addToTrash('extra',{month:m,name:item.name,amount:item.amount},'成本 '+item.name+' '+money(item.amount));
-  S.monthly[m].extras.splice(i,1);
-  if(!S.monthly[m].extras.length)delete S.monthly[m].extras;
-  save();renderMonthly();renderTrash();toast('已移入回收站');
+  showConfirm('删除「'+item.name+'」？删除后可到回收站恢复。', ()=>{
+    addToTrash('extra',{month:m,name:item.name,amount:item.amount},'成本 '+item.name+' '+money(item.amount));
+    S.monthly[m].extras.splice(i,1);
+    if(!S.monthly[m].extras.length)delete S.monthly[m].extras;
+    save();renderMonthly();renderTrash();toast('已移入回收站');
+  });
 }
 /* ---------- 资金 ---------- */
 function renderFunds(){
@@ -717,9 +739,10 @@ function onFundEdit(){
 }
 function resetFund(type){
   const name={working:'流动资金',fixed:'不动资金',original:'店铺原始资金'}[type]||type;
-  if(!confirm('将「'+name+'」清零？原数值进入回收站，可恢复。'))return;
-  addToTrash('fund',{type,value:num(S.funds[type])},'资金 '+name+' 清零');
-  S.funds[type]=0;S.funds.updated=today();save();renderFunds();toast('已清零并移入回收站');
+  showConfirm('将「'+name+'」清零？原数值进入回收站，可恢复。', ()=>{
+    addToTrash('fund',{type,value:num(S.funds[type])},'资金 '+name+' 清零');
+    S.funds[type]=0;S.funds.updated=today();save();renderFunds();toast('已清零并移入回收站');
+  });
 }
 function addLedger(){
   const date=document.getElementById('ledgerDate').value||today();
@@ -865,8 +888,9 @@ function importData(){document.getElementById('importFile').click()}
 function doImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{S=Object.assign(def(),JSON.parse(r.result));save();toast('导入成功');switchTab('daily')}catch(err){toast('文件格式错误')}}
   r.readAsText(f);e.target.value='';}
-function clearAll(){if(confirm('确定清空全部数据（含回收站）？此操作不可恢复，建议先导出备份。')){
-  S=def();localStorage.removeItem(KEY);save();toast('已清空');switchTab('daily')}}
+function clearAll(){showConfirm('确定清空全部数据（含回收站）？此操作不可恢复，建议先导出备份。', ()=>{
+  S=def();localStorage.removeItem(KEY);save();toast('已清空');switchTab('daily');
+});}
 function download(name,content){const blob=new Blob([content],{type:'text/plain'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
   URL.revokeObjectURL(a.href);}
