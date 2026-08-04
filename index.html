@@ -121,6 +121,13 @@
   .fund-section h3{font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
   .fund-table-header{display:grid;grid-template-columns:110px 1fr 1fr 110px 90px;gap:8px;font-size:10px;color:var(--muted);font-weight:700;padding:0 4px 8px}
   .fund-row{display:grid;grid-template-columns:110px 1fr 1fr 110px 90px;gap:8px;align-items:center;margin-bottom:10px}
+  #fundDetailTable{table-layout:fixed}
+  #fundDetailTable th,#fundDetailTable td{text-align:center;padding:8px 4px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #fundDetailTable th:nth-child(1),#fundDetailTable td:nth-child(1){width:100px}
+  #fundDetailTable th:nth-child(2),#fundDetailTable td:nth-child(2){width:90px}
+  #fundDetailTable th:nth-child(3),#fundDetailTable td:nth-child(3){width:22%}
+  #fundDetailTable th:nth-child(4),#fundDetailTable td:nth-child(4){width:22%}
+  #fundDetailTable th:nth-child(5),#fundDetailTable td:nth-child(5){width:100px;text-align:right}
   .fund-row input{padding:6px 8px;font-size:12px;border-radius:12px}
   .fund-row input:disabled{background:rgba(255,255,255,0.22);opacity:0.75}
   .fund-row .field.currency-field input{padding-left:24px}
