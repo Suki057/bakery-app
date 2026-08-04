@@ -622,8 +622,9 @@ function renderMonthExtras(extras){
   if(!extras||!extras.length){container.innerHTML='';return;}
   let html='<div class="row grid2">';
   extras.forEach((e,i)=>{
-    html+=`<div class="field currency-field">
-      <label>${esc(e.name)} <button class="btn ghost xs" onclick="delExtra(${i})" style="margin-left:6px">删</button></label>
+    html+=`<div class="field currency-field" style="position:relative">
+      <label style="padding-right:34px">${esc(e.name)}</label>
+      <button type="button" class="btn ghost xs" onclick="delExtra(${i})" style="position:absolute;right:0;top:-2px;margin:0">删</button>
       <span class="currency">¥</span>
       <input type="number" step="0.01" value="${e.amount}" oninput="onExtraEdit(${i},this.value)">
     </div>`;
