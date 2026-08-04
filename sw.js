@@ -1,4 +1,4 @@
-const CACHE_VER = 'bakery-v20260804-6';
+const CACHE_VER = 'bakery-v20260804-7';
 const ASSETS = [
   './index.html',
   './manifest.json',

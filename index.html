@@ -119,14 +119,15 @@
   .fund-single{max-width:300px;margin-bottom:8px}
   .fund-section{margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.35)}
   .fund-section h3{font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
-  .fund-table-header{display:grid;grid-template-columns:110px 1fr 110px 90px;gap:8px;font-size:10px;color:var(--muted);font-weight:700;padding:0 4px 8px}
-  .fund-row{display:grid;grid-template-columns:110px 1fr 110px 90px;gap:8px;align-items:center;margin-bottom:10px}
+  .fund-table-header{display:grid;grid-template-columns:110px 1fr 1fr 110px 90px;gap:8px;font-size:10px;color:var(--muted);font-weight:700;padding:0 4px 8px}
+  .fund-row{display:grid;grid-template-columns:110px 1fr 1fr 110px 90px;gap:8px;align-items:center;margin-bottom:10px}
   .fund-row input{padding:6px 8px;font-size:12px;border-radius:12px}
   .fund-row input:disabled{background:rgba(255,255,255,0.22);opacity:0.75}
   .fund-row .field.currency-field input{padding-left:24px}
   .fund-row .field.currency-field .currency{left:8px;bottom:7px;font-size:11px}
   @media(max-width:640px){
-    .fund-table-header,.fund-row{grid-template-columns:86px 1fr 86px 78px;gap:5px}
+    .fund-table-header,.fund-row{grid-template-columns:78px 1fr 1fr 78px 68px;gap:5px}
+    .fund-table-header span{font-size:9px}
     .fund-row input{padding:5px 5px;font-size:11px}
     .fund-row .btn.xs{padding:4px 5px;font-size:9px;margin:0}
   }
@@ -268,7 +269,7 @@
       </div>
       <div class="fund-section">
         <h3>🏦 不动资金</h3>
-        <div class="fund-table-header"><span>日期</span><span>资金账号</span><span>资金金额</span><span></span></div>
+        <div class="fund-table-header"><span>日期</span><span>资金账号</span><span>备注</span><span>资金金额</span><span></span></div>
         <div id="fixedItems"></div>
         <div class="actions" style="justify-content:flex-end;margin-top:10px">
           <button type="button" class="btn ghost sm" onclick="addFundItem('fixed')">➕ 添加</button>
@@ -276,7 +277,7 @@
       </div>
       <div class="fund-section">
         <h3>💧 流动资金</h3>
-        <div class="fund-table-header"><span>日期</span><span>资金账号</span><span>资金金额</span><span></span></div>
+        <div class="fund-table-header"><span>日期</span><span>资金账号</span><span>备注</span><span>资金金额</span><span></span></div>
         <div id="workingItems"></div>
         <div class="actions" style="justify-content:flex-end;margin-top:10px">
           <button type="button" class="btn ghost sm" onclick="addFundItem('working')">➕ 添加</button>
@@ -291,21 +292,7 @@
     </div>
     <div class="card">
       <h2>📝 资金变动记录</h2>
-      <div class="row grid3" style="margin-bottom:12px">
-        <div class="field"><label>日期</label><input type="date" id="ledgerDate"></div>
-        <div class="field"><label>类型</label>
-          <select id="ledgerType">
-            <option value="working">流动资金</option>
-            <option value="original">店铺原始资金</option>
-            <option value="fixed">不动资金</option>
-          </select></div>
-        <div class="field"><label>变动金额（可负）</label><input type="number" id="ledgerAmt"></div>
-      </div>
-      <div class="row" style="margin-bottom:12px">
-        <div class="field"><label>备注</label><input type="text" id="ledgerNote" placeholder="如：进货支出 / 利润转入"></div>
-      </div>
-      <button class="btn" onclick="addLedger()">添加记录</button>
-      <table id="ledgerTable" style="margin-top:16px">
+      <table id="ledgerTable" style="margin-top:8px">
         <thead><tr><th>日期</th><th>类型</th><th>变动</th><th>备注</th><th></th></tr></thead>
         <tbody></tbody>
       </table>
@@ -377,6 +364,7 @@
       </table>
       <div class="actions" style="margin-top:12px">
         <button class="btn ghost sm" onclick="purgeTrash();renderTrash()">立即清理过期项</button>
+        <button class="btn ghost sm" onclick="emptyTrash()" style="color:var(--red);border-color:var(--red)">立即清空回收站</button>
       </div>
     </div>
   </section>
@@ -784,6 +772,7 @@ function renderFundItems(type){
     row.innerHTML=`
       <div class="field"><input type="date" class="fi-date" data-idx="${idx}" value="${esc(it.date||'')}" ${locked?'disabled':''}></div>
       <div class="field"><input type="text" class="fi-account" data-idx="${idx}" value="${esc(it.account||'')}" placeholder="资金账号" ${locked?'disabled':''}></div>
+      <div class="field"><input type="text" class="fi-remark" data-idx="${idx}" value="${esc(it.remark||'')}" placeholder="备注" ${locked?'disabled':''}></div>
       <div class="field currency-field"><span class="currency">¥</span><input type="number" step="0.01" class="fi-amount" data-idx="${idx}" value="${it.amount===0||it.amount===''?'':it.amount}" placeholder="0.00" ${locked?'disabled':''}></div>
       <div class="field" style="display:flex;gap:4px;justify-content:flex-end;align-items:center">
         ${locked
@@ -796,7 +785,7 @@ function renderFundItems(type){
 }
 function addFundItem(type){
   S.funds[type+'Items']=S.funds[type+'Items']||[];
-  S.funds[type+'Items'].push({id:'fi'+Date.now()+Math.random().toString(36).slice(2,7),date:today(),account:'',amount:'',locked:false});
+  S.funds[type+'Items'].push({id:'fi'+Date.now()+Math.random().toString(36).slice(2,7),date:today(),account:'',remark:'',amount:'',locked:false});
   renderFundItems(type);
 }
 function saveFundItem(type,idx){
@@ -805,8 +794,9 @@ function saveFundItem(type,idx){
   const container=document.getElementById(type+'Items');
   const date=container.querySelector(`.fi-date[data-idx="${idx}"]`).value;
   const account=container.querySelector(`.fi-account[data-idx="${idx}"]`).value.trim();
+  const remark=container.querySelector(`.fi-remark[data-idx="${idx}"]`).value.trim();
   const amount=num(container.querySelector(`.fi-amount[data-idx="${idx}"]`).value);
-  items[idx]={...items[idx],date,account,amount,locked:true};
+  items[idx]={...items[idx],date,account,remark,amount,locked:true};
   S.funds.updated=today();save();renderFunds();toast('已保存');
 }
 function editFundItem(type,idx){
@@ -821,7 +811,7 @@ function delFundItem(type,idx){
   const it=items[idx];
   const name={fixed:'不动资金',working:'流动资金'}[type];
   showConfirm('删除这条'+name+'记录？删除后可到回收站恢复。', ()=>{
-    addToTrash('fundItem',{type,item:it},name+' '+it.date+' '+(it.account||'')+' '+money(it.amount));
+    addToTrash('fundItem',{type,item:it},name+' '+it.date+' '+(it.account||'')+' '+(it.remark||'')+' '+money(it.amount));
     items.splice(idx,1);
     S.funds.updated=today();save();renderFunds();renderTrash();toast('已移入回收站');
   });
@@ -983,6 +973,12 @@ function restoreTrash(id){const i=(S.trash||[]).findIndex(t=>t.id===id);if(i<0)r
   else if(t.type==='extra'){S.monthly[t.data.month]=S.monthly[t.data.month]||{extras:[]};S.monthly[t.data.month].extras.push({name:t.data.name,amount:t.data.amount});}
   S.trash.splice(i,1);save();renderTrash();renderMonthly();renderFunds();toast('已恢复');}
 function permDelete(id){S.trash=S.trash.filter(t=>t.id!==id);save();renderTrash();toast('已永久删除');}
+function emptyTrash(){
+  if(!S.trash||!S.trash.length){toast('回收站已经是空的');return;}
+  showConfirm('确定清空回收站？所有项目将被永久删除，不可恢复。', ()=>{
+    S.trash=[];save();renderTrash();toast('回收站已清空');
+  });
+}
 
 /* ---------- 设置 ---------- */
 function renderSettings(){
@@ -1027,7 +1023,6 @@ function download(name,content){const blob=new Blob([content],{type:'text/plain'
 purgeTrash();
 document.getElementById('dailyDate').value=today();
 document.getElementById('monthPick').value=ym(new Date());
-document.getElementById('ledgerDate').value=today();
 document.getElementById('purMonth').value=ym(new Date());
 document.getElementById('monthTurnoverMonth').value=ym(new Date());
 document.getElementById('purDate').value=today();
