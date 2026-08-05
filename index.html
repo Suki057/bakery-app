@@ -181,7 +181,7 @@
 <header>
   <div>
     <h1>🥐 烘焙店经营记账助手</h1>
-    <div class="sub">每日营业额 · 月度利润 · 资金看板 · 进货清单 · 本地保存</div>
+    <div class="sub">每日营业额 · 月度利润 · 资金看板 · 进货清单 · 初始投入 · 本地保存</div>
   </div>
 </header>
 <nav id="nav">
@@ -189,6 +189,7 @@
   <button data-tab="monthly" onclick="switchTab('monthly')">📊 月度统计</button>
   <button data-tab="funds" onclick="switchTab('funds')">💰 资金记录</button>
   <button data-tab="purchase" onclick="switchTab('purchase')">🛒 进货清单</button>
+  <button data-tab="initial" onclick="switchTab('initial')">🚀 初始投入</button>
   <button data-tab="trash" onclick="switchTab('trash')">🗑️ 回收站</button>
   <button data-tab="settings" onclick="switchTab('settings')">⚙️ 设置</button>
 </nav>
@@ -362,6 +363,63 @@
     </div>
   </section>
 
+  <!-- 初始投入 -->
+  <section id="tab-initial" style="display:none">
+    <div class="card">
+      <h2>🚀 初始投入 <span class="tag">开店一次性支出</span></h2>
+      <div class="summary" id="initialSummary"></div>
+    </div>
+    <div class="card">
+      <h2>🏠 房租与硬装</h2>
+      <div class="row grid2">
+        <div class="field currency-field"><label>租房押金</label><span class="currency">¥</span><input type="number" step="0.01" id="iniDeposit" oninput="onInitialEdit()"></div>
+        <div class="field currency-field"><label>首期房租</label><span class="currency">¥</span><input type="number" step="0.01" id="iniFirstRent" oninput="onInitialEdit()"></div>
+        <div class="field currency-field"><label>消防改造</label><span class="currency">¥</span><input type="number" step="0.01" id="iniFire" oninput="onInitialEdit()"></div>
+        <div class="field currency-field"><label>装修金额</label><span class="currency">¥</span><input type="number" step="0.01" id="iniRenovation" oninput="onInitialEdit()"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>📄 证件办理</h2>
+      <div class="row grid2">
+        <div class="field currency-field"><label>营业执照</label><span class="currency">¥</span><input type="number" step="0.01" id="iniLicenseBusiness" oninput="onInitialEdit()"></div>
+        <div class="field currency-field"><label>食品经营许可证</label><span class="currency">¥</span><input type="number" step="0.01" id="iniLicenseFood" oninput="onInitialEdit()"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>🛠️ 设备物资 <span class="tag" id="iniEquipmentTag">0 项</span></h2>
+      <div class="table-wrap">
+        <table id="iniEquipmentTable" style="min-width:360px">
+          <thead><tr><th>设备名称</th><th>购买金额</th><th></th></tr></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button type="button" class="btn ghost sm" onclick="addInitialItem('equipment')">➕ 添加设备</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>🥦 9月现有食材和包材 <span class="tag" id="iniInventoryTag">0 项</span></h2>
+      <div class="table-wrap">
+        <table id="iniInventoryTable" style="min-width:460px">
+          <thead><tr><th>名称</th><th>数量</th><th>金额</th><th></th></tr></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button type="button" class="btn ghost sm" onclick="addInitialItem('inventory')">➕ 添加食材/包材</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>💻 系统与平台</h2>
+      <div class="row grid2">
+        <div class="field currency-field"><label>外卖后台</label><span class="currency">¥</span><input type="number" step="0.01" id="iniTakeaway" oninput="onInitialEdit()"></div>
+        <div class="field currency-field"><label>堂食系统</label><span class="currency">¥</span><input type="number" step="0.01" id="iniPos" oninput="onInitialEdit()"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- 回收站 -->
   <section id="tab-trash" style="display:none">
     <div class="card">
@@ -449,7 +507,9 @@ function load(){
 }
 function def(){return{settings:{profitRate:60,rent:0,utility:0,wage:0},
   draft:{},records:[],monthly:{},
-  funds:{working:0,original:0,fixed:0,updated:'',ledger:[],fixedItems:[],workingItems:[]},purchase:[],trash:[]}}
+  funds:{working:0,original:0,fixed:0,updated:'',ledger:[],fixedItems:[],workingItems:[]},
+  initial:{deposit:0,firstRent:0,fire:0,license:{business:0,food:0},renovation:0,equipment:[],inventory:[],takeaway:0,pos:0},
+  purchase:[],trash:[]}}
 function save(){localStorage.setItem(KEY,JSON.stringify(S));toast('已保存')}
 function num(v){const n=parseFloat((''+v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n}
 function ym(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
@@ -903,6 +963,106 @@ function delLedger(i){
   S.funds.ledger.splice(i,1);save();renderFunds();renderTrash();
 }
 
+/* ---------- 初始投入 ---------- */
+function getInitial(){return S.initial||def().initial;}
+function renderInitial(){
+  const ini=getInitial();
+  document.getElementById('iniDeposit').value=ini.deposit||'';
+  document.getElementById('iniFirstRent').value=ini.firstRent||'';
+  document.getElementById('iniFire').value=ini.fire||'';
+  document.getElementById('iniRenovation').value=ini.renovation||'';
+  document.getElementById('iniLicenseBusiness').value=(ini.license&&ini.license.business)||'';
+  document.getElementById('iniLicenseFood').value=(ini.license&&ini.license.food)||'';
+  document.getElementById('iniTakeaway').value=ini.takeaway||'';
+  document.getElementById('iniPos').value=ini.pos||'';
+  renderInitialList('equipment','iniEquipmentTable','iniEquipmentTag',['name','amount'],['设备名称','购买金额'],it=>money(it.amount));
+  renderInitialList('inventory','iniInventoryTable','iniInventoryTag',['name','qty','amount'],['名称','数量','金额'],it=>money(it.amount));
+  renderInitialSummary();
+}
+function renderInitialSummary(){
+  const ini=getInitial();
+  const license=(ini.license||{});
+  const fixed=num(ini.deposit)+num(ini.firstRent)+num(ini.fire)+num(license.business)+num(license.food)+num(ini.renovation)+num(ini.takeaway)+num(ini.pos);
+  const equipTotal=(ini.equipment||[]).reduce((s,it)=>s+num(it.amount),0);
+  const invTotal=(ini.inventory||[]).reduce((s,it)=>s+num(it.amount),0);
+  const total=fixed+equipTotal+invTotal;
+  document.getElementById('initialSummary').innerHTML=
+    stat('初始投入合计',money(total))+
+    stat('房租/硬装/证件/系统',money(fixed))+
+    stat('设备物资合计',money(equipTotal))+
+    stat('食材包材合计',money(invTotal));
+}
+function onInitialEdit(){
+  S.initial=getInitial();
+  S.initial.deposit=num(document.getElementById('iniDeposit').value);
+  S.initial.firstRent=num(document.getElementById('iniFirstRent').value);
+  S.initial.fire=num(document.getElementById('iniFire').value);
+  S.initial.renovation=num(document.getElementById('iniRenovation').value);
+  S.initial.license={business:num(document.getElementById('iniLicenseBusiness').value),food:num(document.getElementById('iniLicenseFood').value)};
+  S.initial.takeaway=num(document.getElementById('iniTakeaway').value);
+  S.initial.pos=num(document.getElementById('iniPos').value);
+  clearTimeout(window._iniT);window._iniT=setTimeout(save,500);
+  renderInitialSummary();
+}
+function renderInitialList(key,tableId,tagId,fields,headers){
+  const ini=getInitial();
+  const items=ini[key]||[];
+  document.getElementById(tagId).textContent=items.length+' 项';
+  const tb=q('#'+tableId+' tbody');const tf=q('#'+tableId+' tfoot');
+  tb.innerHTML='';let total=0;
+  if(!items.length){tb.innerHTML='<tr><td colspan="'+(fields.length+1)+'" class="muted" style="text-align:center;padding:10px">暂无记录，点击下方添加</td></tr>';tf.innerHTML='';return;}
+  items.forEach((it,idx)=>{
+    total+=num(it.amount);
+    const tr=document.createElement('tr');
+    let html='';
+    fields.forEach(f=>{
+      if(f==='amount') html+=`<td>${money(it[f])}</td>`;
+      else html+=`<td>${esc(it[f]||'')}</td>`;
+    });
+    html+=`<td><button type="button" class="btn ghost sm" onclick="delInitialItem('${key}',${idx})">删</button></td>`;
+    tr.innerHTML=html;tb.appendChild(tr);
+  });
+  const totalCol=fields.length-1;
+  tf.innerHTML=`<tr class="tot"><td colspan="${totalCol}">合计</td><td>${money(total)}</td><td></td></tr>`;
+}
+function openInitialItemModal(key){
+  if(document.getElementById('initialModalBackdrop'))return;
+  const isEq=key==='equipment';
+  const backdrop=document.createElement('div');
+  backdrop.className='modal-backdrop';backdrop.id='initialModalBackdrop';
+  backdrop.innerHTML=`<div class="modal">
+    <h2>${isEq?'添加设备':'添加食材/包材'}</h2>
+    <div class="field" style="margin-top:14px"><label>${isEq?'设备名称':'名称'}</label><input type="text" id="initialItemName" placeholder="${isEq?'如：烤箱':'如：高筋面粉'}" style="font-size:16px"></div>
+    ${isEq?'' : '<div class="field" style="margin-top:12px"><label>数量</label><input type="text" id="initialItemQty" placeholder="如：25kg / 3箱" style="font-size:16px"></div>'}
+    <div class="field currency-field" style="margin-top:12px"><label>金额</label><span class="currency">¥</span><input type="number" step="0.01" id="initialItemAmount" placeholder="0.00" style="font-size:16px"></div>
+    <div class="actions" style="margin-top:18px;justify-content:flex-end">
+      <button class="btn ghost sm" onclick="closeInitialItemModal()">取消</button>
+      <button class="btn sm" onclick="confirmAddInitialItem('${key}')">确定</button>
+    </div>
+  </div>`;
+  document.body.appendChild(backdrop);
+}
+function closeInitialItemModal(){const b=document.getElementById('initialModalBackdrop');if(b)b.remove();}
+function confirmAddInitialItem(key){
+  const name=document.getElementById('initialItemName').value.trim();
+  const amount=num(document.getElementById('initialItemAmount').value);
+  if(!name){toast('请输入名称');return;}
+  if(amount<=0){toast('请输入金额');return;}
+  S.initial=getInitial();S.initial[key]=S.initial[key]||[];
+  if(key==='equipment') S.initial[key].push({id:'eq'+Date.now(),name,amount});
+  else {const qty=document.getElementById('initialItemQty').value.trim();S.initial[key].push({id:'iv'+Date.now(),name,qty,amount});}
+  closeInitialItemModal();save();renderInitial();toast('已添加');
+}
+function addInitialItem(key){openInitialItemModal(key);}
+function delInitialItem(key,idx){
+  const ini=getInitial();const items=ini[key];if(!items||!items[idx])return;
+  const it=items[idx];const label=key==='equipment'?'设备':'食材/包材';
+  showConfirm('删除这条'+label+'记录？删除后可到回收站恢复。', ()=>{
+    addToTrash('initialItem',{key,item:it},label+' '+esc(it.name)+' '+money(it.amount));
+    items.splice(idx,1);save();renderInitial();renderTrash();toast('已移入回收站');
+  });
+}
+
 /* ---------- 进货清单 ---------- */
 function fillCatSelect(){const sel=document.getElementById('purCat');
   if(sel.options.length)return;CATS.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}
@@ -975,7 +1135,7 @@ function exportPurchaseCSV(){
 /* ---------- 回收站 ---------- */
 function addToTrash(type,data,label){S.trash=S.trash||[];S.trash.push({id:'t'+Date.now(),type,data,label,deletedAt:today()});}
 function purgeTrash(){if(!S.trash)return;const cut=daysAgoStr(TRASH_DAYS);S.trash=S.trash.filter(t=>t.deletedAt>=cut);}
-function trashType(t){return {record:'记账明细',purchase:'进货',ledger:'资金变动',fund:'资金',fundItem:'资金明细',extra:'成本项'}[t]||t;}
+function trashType(t){return {record:'记账明细',purchase:'进货',ledger:'资金变动',fund:'资金',fundItem:'资金明细',extra:'成本项',initialItem:'初始投入'}[t]||t;}
 function renderTrash(){purgeTrash();const tb=q('#trashTable tbody');tb.innerHTML='';
   if(!S.trash||!S.trash.length){tb.innerHTML='<tr><td colspan="5" class="muted">回收站为空</td></tr>';return;}
   S.trash.slice().reverse().forEach(t=>{const left=TRASH_DAYS-ageDays(t.deletedAt);
@@ -997,7 +1157,8 @@ function restoreTrash(id){const i=(S.trash||[]).findIndex(t=>t.id===id);if(i<0)r
   }
   else if(t.type==='fundItem'){S.funds[t.data.type+'Items']=S.funds[t.data.type+'Items']||[];S.funds[t.data.type+'Items'].push(t.data.item);}
   else if(t.type==='extra'){S.monthly[t.data.month]=S.monthly[t.data.month]||{extras:[]};S.monthly[t.data.month].extras.push({name:t.data.name,amount:t.data.amount});}
-  S.trash.splice(i,1);save();renderTrash();renderMonthly();renderFunds();toast('已恢复');}
+  else if(t.type==='initialItem'){S.initial=getInitial();S.initial[t.data.key]=S.initial[t.data.key]||[];S.initial[t.data.key].push(t.data.item);}
+  S.trash.splice(i,1);save();renderTrash();renderMonthly();renderFunds();renderInitial();toast('已恢复');}
 function permDelete(id){S.trash=S.trash.filter(t=>t.id!==id);save();renderTrash();toast('已永久删除');}
 function emptyTrash(){
   if(!S.trash||!S.trash.length){toast('回收站已经是空的');return;}
@@ -1024,12 +1185,13 @@ function onSettingEdit(){
 /* ---------- 工具 ---------- */
 function switchTab(t){
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
-  ['daily','monthly','funds','purchase','trash','settings'].forEach(s=>
+  ['daily','monthly','funds','purchase','initial','trash','settings'].forEach(s=>
     document.getElementById('tab-'+s).style.display=(s===t?'block':'none'));
   if(t==='daily'){renderDaily();}
   if(t==='monthly')renderMonthly();
   if(t==='funds')renderFunds();
   if(t==='purchase')renderPurchase();
+  if(t==='initial')renderInitial();
   if(t==='trash')renderTrash();
   if(t==='settings')renderSettings();
 }
