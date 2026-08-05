@@ -276,7 +276,7 @@
     <div class="card">
       <h2>📊 月度统计 <span class="tag" id="monthLabel"></span></h2>
       <div class="summary" id="monthSummary"></div>
-      <div class="hint">毛利润=实际利润-固定成本合计。资金月增收=实际利润-成本合计。</div>
+      <div class="hint">毛利润=实际营业额-进货成本；毛利率=毛利润/实际营业额；净利润=实际营业额-进货成本-固定成本合计-其他杂费。</div>
       <h2 style="margin-top:18px">当月每日利润趋势</h2>
       <div class="bars" id="monthBars"></div>
     </div>
@@ -716,12 +716,13 @@ function renderMonthly(){
   const dayMap=monthDayMap(m);
   let actualTurnover=0,actualProfit=0,dailyTurnover=0;
   Object.values(dayMap).forEach(d=>{actualTurnover+=d.actualTurnover;actualProfit+=d.actualProfit;dailyTurnover+=d.dailyTurnover;});
-  const gross=actualProfit-fixed;
-  const fundGrowth=actualProfit-costTotal;
+  const gross=actualTurnover-mc.purchase;
+  const grossRate=actualTurnover>0?(gross/actualTurnover)*100:0;
+  const net=actualTurnover-mc.purchase-fixed-extrasTotal;
   document.getElementById('monthSummary').innerHTML=
-    stat('实际利润',money(actualProfit))+
     stat('毛利润',money(gross))+
-    stat('资金月增收',money(fundGrowth))+
+    stat('毛利率',(actualTurnover>0?grossRate.toFixed(2):'0.00')+'%')+
+    stat('净利润',money(net))+
     stat('记账天数',Object.keys(dayMap).length+' 天');
   document.getElementById('monthNet').value=actualProfit;
   const days=Object.keys(dayMap).sort();
@@ -766,11 +767,14 @@ function onExtraEdit(i,v){
   const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
   document.getElementById('monthCostTotal').value=fixed+mc.purchase+extrasTotal;
   const dayMap=monthDayMap(m);
-  let actualProfit=0;Object.values(dayMap).forEach(d=>actualProfit+=d.actualProfit);
+  let actualTurnover=0;Object.values(dayMap).forEach(d=>actualTurnover+=d.actualTurnover);
+  const gross=actualTurnover-mc.purchase;
+  const grossRate=actualTurnover>0?(gross/actualTurnover)*100:0;
+  const net=actualTurnover-mc.purchase-fixed-extrasTotal;
   document.getElementById('monthSummary').innerHTML=
-    stat('实际利润',money(actualProfit))+
-    stat('毛利润',money(actualProfit-fixed))+
-    stat('资金月增收',money(actualProfit-fixed-mc.purchase-extrasTotal))+
+    stat('毛利润',money(gross))+
+    stat('毛利率',(actualTurnover>0?grossRate.toFixed(2):'0.00')+'%')+
+    stat('净利润',money(net))+
     stat('记账天数',Object.keys(dayMap).length+' 天');
 }
 function showConfirm(msg, onYes){
