@@ -166,6 +166,11 @@
   .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .purchase-table td:last-child,.purchase-table th:last-child{text-align:right}
   .purchase-table td:nth-child(7),.purchase-table th:nth-child(7){text-align:right}
+  .month-detail-table{table-layout:fixed;width:100%;min-width:860px!important}
+  .month-detail-table th,.month-detail-table td{text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .month-detail-table th:first-child,.month-detail-table td:first-child{text-align:left}
+  .month-detail-table th:nth-child(5),.month-detail-table td:nth-child(5){text-align:right}
+  .month-detail-table th:nth-child(9),.month-detail-table td:nth-child(9){text-align:center}
   .hint::before{content:'';position:absolute;inset:0;border-radius:16px;background:var(--band);pointer-events:none;z-index:0}
   .toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
     background:rgba(47,47,58,0.82);color:#fff;padding:12px 22px;border-radius:16px;font-size:10px;
@@ -285,6 +290,14 @@
       <h2>📊 月度统计 <span class="tag" id="monthLabel"></span></h2>
       <div class="summary" id="monthSummary"></div>
       <div class="hint">毛利润=实际营业额-进货成本；毛利率=毛利润/实际营业额；净利润=实际营业额-进货成本-固定成本合计-其他杂费。</div>
+      <h2 style="margin-top:18px">📋 月度明细</h2>
+      <div class="table-wrap">
+        <table id="monthDetailTable" class="month-detail-table">
+          <thead><tr><th>月份</th><th>实际营业额</th><th>进货成本</th><th>毛利润</th><th>毛利率</th><th>固定成本</th><th>其他杂费</th><th>净利润</th><th>记账天数</th></tr></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
       <h2 style="margin-top:18px">当月每日利润趋势</h2>
       <div class="bars" id="monthBars"></div>
     </div>
@@ -739,6 +752,7 @@ function renderMonthly(){
   days.forEach(d=>{const h=Math.max(2,(dayMap[d].actualProfit/max)*140);
     const b=document.createElement('div');b.className='bar';b.style.height=h+'px';
     b.title=d+'：'+money(dayMap[d].actualProfit);b.innerHTML=`<span>${d.slice(5)}</span>`;bars.appendChild(b);});
+  renderMonthlyDetail();
 }
 function onMonthCostEdit(){
   const m=document.getElementById('monthPick').value;
@@ -748,6 +762,58 @@ function onMonthCostEdit(){
   S.monthly[m].wage=num(document.getElementById('mWage').value);
   S.monthly[m].purchase=num(document.getElementById('mPurchase').value);
   renderMonthly();save();
+}
+function getMonthStats(m){
+  const mc=getMonthCosts(m);
+  const fixed=mc.rent+mc.utility+mc.wage;
+  const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
+  const dayMap=monthDayMap(m);
+  let actualTurnover=0,dailyTurnover=0,actualProfit=0;
+  Object.values(dayMap).forEach(d=>{actualTurnover+=d.actualTurnover;dailyTurnover+=d.dailyTurnover;actualProfit+=d.actualProfit;});
+  const gross=actualTurnover-mc.purchase;
+  const grossRate=actualTurnover>0?(gross/actualTurnover)*100:0;
+  const net=actualTurnover-mc.purchase-fixed-extrasTotal;
+  return {m,actualTurnover,dailyTurnover,actualProfit,purchase:mc.purchase,fixed,extrasTotal,gross,grossRate,net,days:Object.keys(dayMap).length};
+}
+function renderMonthlyDetail(){
+  const tb=q('#monthDetailTable tbody');const tf=q('#monthDetailTable tfoot');
+  if(!tb)return;
+  const set=new Set();
+  (S.records||[]).forEach(r=>{if(r.date)set.add(r.date.slice(0,7));});
+  (S.purchase||[]).forEach(p=>{if(p.date)set.add(p.date.slice(0,7));});
+  Object.keys(S.monthly||{}).forEach(k=>set.add(k));
+  const months=Array.from(set).sort((a,b)=>b.localeCompare(a));
+  if(!months.length){tb.innerHTML='<tr><td colspan="9" class="muted" style="text-align:center;padding:10px">暂无月度数据</td></tr>';tf.innerHTML='';return;}
+  let total={actualTurnover:0,purchase:0,gross:0,fixed:0,extrasTotal:0,net:0,days:0};
+  tb.innerHTML='';
+  months.forEach(m=>{
+    const s=getMonthStats(m);
+    total.actualTurnover+=s.actualTurnover;total.purchase+=s.purchase;total.gross+=s.gross;
+    total.fixed+=s.fixed;total.extrasTotal+=s.extrasTotal;total.net+=s.net;total.days+=s.days;
+    tb.innerHTML+=`<tr>
+      <td>${m}</td>
+      <td>${money(s.actualTurnover)}</td>
+      <td>${money(s.purchase)}</td>
+      <td class="${s.gross<0?'neg':'pos'}">${money(s.gross)}</td>
+      <td>${s.actualTurnover>0?s.grossRate.toFixed(2):'0.00'}%</td>
+      <td>${money(s.fixed)}</td>
+      <td>${money(s.extrasTotal)}</td>
+      <td class="${s.net<0?'neg':'pos'}">${money(s.net)}</td>
+      <td>${s.days} 天</td>
+    </tr>`;
+  });
+  const totalGrossRate=total.actualTurnover>0?(total.gross/total.actualTurnover)*100:0;
+  tf.innerHTML=`<tr class="tot">
+    <td>合计</td>
+    <td>${money(total.actualTurnover)}</td>
+    <td>${money(total.purchase)}</td>
+    <td class="${total.gross<0?'neg':'pos'}">${money(total.gross)}</td>
+    <td>${totalGrossRate.toFixed(2)}%</td>
+    <td>${money(total.fixed)}</td>
+    <td>${money(total.extrasTotal)}</td>
+    <td class="${total.net<0?'neg':'pos'}">${money(total.net)}</td>
+    <td>${total.days} 天</td>
+  </tr>`;
 }
 function renderMonthExtras(extras){
   const container=document.getElementById('monthExtras');
