@@ -158,6 +158,14 @@
   .table-wrap th,.table-wrap td{padding:7px 8px;white-space:nowrap}
   .table-wrap th{background:rgba(255,231,151,0.22)}
   .table-wrap td .small{display:block;font-size:8px;color:var(--muted)}
+  .initial-item-table{min-width:100%!important;table-layout:fixed;width:100%}
+  .initial-item-table th,.initial-item-table td{text-align:left;overflow:hidden;text-overflow:ellipsis}
+  .initial-item-table td:last-child,.initial-item-table th:last-child{text-align:right;white-space:nowrap}
+  .initial-item-table td:last-child .btn{margin:0 2px}
+  .purchase-table{table-layout:fixed;width:100%;min-width:720px!important}
+  .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .purchase-table td:last-child,.purchase-table th:last-child{text-align:right}
+  .purchase-table td:nth-child(7),.purchase-table th:nth-child(7){text-align:right}
   .hint::before{content:'';position:absolute;inset:0;border-radius:16px;background:var(--band);pointer-events:none;z-index:0}
   .toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
     background:rgba(47,47,58,0.82);color:#fff;padding:12px 22px;border-radius:16px;font-size:10px;
@@ -373,8 +381,8 @@
     </div>
     <div class="card">
       <h2>📋 进货明细</h2>
-      <table id="purTable">
-        <thead><tr><th>日期</th><th>名称</th><th>重量/数量</th><th>用途</th><th>分类</th><th>途径</th><th>金额</th></tr></thead>
+      <table id="purTable" class="purchase-table">
+        <thead><tr><th style="width:14%">日期</th><th style="width:20%">名称</th><th style="width:12%">重量/数量</th><th style="width:16%">用途</th><th style="width:12%">分类</th><th style="width:10%">途径</th><th style="width:12%">金额</th><th style="width:4%"></th></tr></thead>
         <tbody></tbody><tfoot></tfoot>
       </table>
     </div>
@@ -393,8 +401,8 @@
     <div class="card">
       <h2>🛠️ 设备物资 <span class="tag" id="iniEquipmentTag">0 项</span></h2>
       <div class="table-wrap">
-        <table id="iniEquipmentTable" style="min-width:360px">
-          <thead><tr><th>设备名称</th><th>购买金额</th><th></th></tr></thead>
+        <table id="iniEquipmentTable" class="initial-item-table">
+          <thead><tr><th style="width:40%">设备名称</th><th style="width:22%">购买金额</th><th style="width:28%">备注</th><th style="width:10%"></th></tr></thead>
           <tbody></tbody>
           <tfoot></tfoot>
         </table>
@@ -406,8 +414,8 @@
     <div class="card">
       <h2>🥦 9月现有食材和包材 <span class="tag" id="iniInventoryTag">0 项</span></h2>
       <div class="table-wrap">
-        <table id="iniInventoryTable" style="min-width:460px">
-          <thead><tr><th>名称</th><th>数量</th><th>金额</th><th></th></tr></thead>
+        <table id="iniInventoryTable" class="initial-item-table">
+          <thead><tr><th style="width:26%">名称</th><th style="width:18%">数量</th><th style="width:18%">金额</th><th style="width:28%">备注</th><th style="width:10%"></th></tr></thead>
           <tbody></tbody>
           <tfoot></tfoot>
         </table>
@@ -505,7 +513,7 @@ function load(){
   }catch(e){return def()}
 }
 function migrateInitial(ini){
-  const items=['deposit','firstRent','fire','renovation','takeaway','pos'];
+  const items=['deposit','firstRent','fire','renovation','takeaway','pos','pastCost'];
   items.forEach(k=>{
     if(!ini[k] || typeof ini[k]!=='object' || Array.isArray(ini[k])){
       const oldAmount=num(ini[k]);
@@ -529,7 +537,7 @@ function migrateInitial(ini){
 function def(){return{settings:{profitRate:60,rent:0,utility:0,wage:0},
   draft:{},records:[],monthly:{},
   funds:{working:0,original:0,fixed:0,updated:'',ledger:[],fixedItems:[],workingItems:[]},
-  initial:{deposit:{amount:0,note:'',locked:false},firstRent:{amount:0,note:'',locked:false},fire:{amount:0,note:'',locked:false},renovation:{amount:0,note:'',locked:false},takeaway:{amount:0,note:'',locked:false},pos:{amount:0,note:'',locked:false},equipment:[],inventory:[],summary:{total:'',fixed:'',equipment:'',inventory:''}},
+  initial:{deposit:{amount:0,note:'',locked:false},firstRent:{amount:0,note:'',locked:false},fire:{amount:0,note:'',locked:false},renovation:{amount:0,note:'',locked:false},takeaway:{amount:0,note:'',locked:false},pos:{amount:0,note:'',locked:false},pastCost:{amount:0,note:'',locked:false},equipment:[],inventory:[],summary:{total:'',fixed:'',equipment:'',inventory:''}},
   purchase:[],trash:[]}}
 function save(){localStorage.setItem(KEY,JSON.stringify(S));toast('已保存')}
 function num(v){const n=parseFloat((''+v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n}
@@ -998,13 +1006,14 @@ const RENT_KEYS=[
   {k:'fire',label:'证件办理（营业执照&食品证）'},
   {k:'renovation',label:'装修金额'},
   {k:'takeaway',label:'外卖平台'},
-  {k:'pos',label:'堂食系统'}
+  {k:'pos',label:'堂食系统'},
+  {k:'pastCost',label:'25-26年已投入成本'}
 ];
 function renderInitial(){
   const ini=getInitial();
   renderRentItems();
-  renderInitialList('equipment','iniEquipmentTable','iniEquipmentTag',['name','amount'],['设备名称','购买金额'],it=>money(it.amount));
-  renderInitialList('inventory','iniInventoryTable','iniInventoryTag',['name','qty','amount'],['名称','数量','金额'],it=>money(it.amount));
+  renderInitialList('equipment','iniEquipmentTable','iniEquipmentTag',['name','amount','note'],['设备名称','购买金额','备注'],it=>money(it.amount));
+  renderInitialList('inventory','iniInventoryTable','iniInventoryTag',['name','qty','amount','note'],['名称','数量','金额','备注'],it=>money(it.amount));
   renderInitialSummary();
 }
 function renderRentItems(){
@@ -1048,13 +1057,14 @@ function toggleRentLock(key){
 function renderInitialSummary(){
   const ini=getInitial();
   const fixed=num(ini.deposit.amount)+num(ini.firstRent.amount)+num(ini.fire.amount)+num(ini.renovation.amount)+num(ini.takeaway.amount)+num(ini.pos.amount);
+  const pastCost=num(ini.pastCost.amount);
   const equipTotal=(ini.equipment||[]).reduce((s,it)=>s+num(it.amount),0);
   const invTotal=(ini.inventory||[]).reduce((s,it)=>s+num(it.amount),0);
   const total=fixed+equipTotal+invTotal;
   const sum=ini.summary||{total:'',fixed:'',equipment:'',inventory:''};
   document.getElementById('initialSummary').innerHTML=
     statInput('初始投入合计',sum.total!==''?sum.total:total,'iniSummaryTotal')+
-    statInput('房租/硬装/证件/系统',sum.fixed!==''?sum.fixed:fixed,'iniSummaryFixed')+
+    statInput('房租&装修&证件&收款系统',sum.fixed!==''?sum.fixed:fixed,'iniSummaryFixed')+
     statInput('设备物资合计',sum.equipment!==''?sum.equipment:equipTotal,'iniSummaryEquipment')+
     statInput('食材包材合计',sum.inventory!==''?sum.inventory:invTotal,'iniSummaryInventory');
 }
@@ -1080,24 +1090,31 @@ function renderInitialList(key,tableId,tagId,fields,headers){
     let html='';
     fields.forEach(f=>{
       if(f==='amount') html+=`<td>${money(it[f])}</td>`;
+      else if(f==='note') html+=`<td>${esc(it[f]||'')}</td>`;
       else html+=`<td>${esc(it[f]||'')}</td>`;
     });
-    html+=`<td><button type="button" class="btn ghost sm" onclick="delInitialItem('${key}',${idx})">删</button></td>`;
+    html+=`<td><button type="button" class="btn ghost xs" onclick="editInitialItem('${key}',${idx})">编辑</button><button type="button" class="btn ghost xs" onclick="delInitialItem('${key}',${idx})">删</button></td>`;
     tr.innerHTML=html;tb.appendChild(tr);
   });
-  const totalCol=fields.length-1;
-  tf.innerHTML=`<tr class="tot"><td colspan="${totalCol}">合计</td><td>${money(total)}</td><td></td></tr>`;
+  const totalCol=fields.indexOf('amount');
+  const noteColStart=fields.indexOf('note');
+  const colspan=noteColStart>=0?noteColStart:fields.length-1;
+  tf.innerHTML=`<tr class="tot"><td colspan="${colspan}">合计</td><td>${money(total)}</td><td colspan="${fields.length-colspan}"></td></tr>`;
 }
-function openInitialItemModal(key){
+function openInitialItemModal(key,editIdx){
   if(document.getElementById('initialModalBackdrop'))return;
   const isEq=key==='equipment';
+  const items=getInitial()[key]||[];
+  const edit=typeof editIdx==='number' && items[editIdx] ? items[editIdx] : null;
+  const title=edit?(isEq?'编辑设备':'编辑食材/包材'):(isEq?'添加设备':'添加食材/包材');
   const backdrop=document.createElement('div');
   backdrop.className='modal-backdrop';backdrop.id='initialModalBackdrop';
-  backdrop.innerHTML=`<div class="modal">
-    <h2>${isEq?'添加设备':'添加食材/包材'}</h2>
-    <div class="field" style="margin-top:14px"><label>${isEq?'设备名称':'名称'}</label><input type="text" id="initialItemName" placeholder="${isEq?'如：烤箱':'如：高筋面粉'}" style="font-size:16px"></div>
-    ${isEq?'' : '<div class="field" style="margin-top:12px"><label>数量</label><input type="text" id="initialItemQty" placeholder="如：25kg / 3箱" style="font-size:16px"></div>'}
-    <div class="field currency-field" style="margin-top:12px"><label>金额</label><span class="currency">¥</span><input type="number" step="0.01" id="initialItemAmount" placeholder="0.00" style="font-size:16px"></div>
+  backdrop.innerHTML=`<div class="modal" data-key="${key}" data-idx="${editIdx!==undefined?editIdx:''}">
+    <h2>${title}</h2>
+    <div class="field" style="margin-top:14px"><label>${isEq?'设备名称':'名称'}</label><input type="text" id="initialItemName" value="${esc(edit?edit.name:'')}" placeholder="${isEq?'如：烤箱':'如：高筋面粉'}" style="font-size:16px"></div>
+    ${isEq?'' : '<div class="field" style="margin-top:12px"><label>数量</label><input type="text" id="initialItemQty" value="'+(edit&&edit.qty?esc(edit.qty):'')+'" placeholder="如：25kg / 3箱" style="font-size:16px"></div>'}
+    <div class="field currency-field" style="margin-top:12px"><label>金额</label><span class="currency">¥</span><input type="number" step="0.01" id="initialItemAmount" value="${edit?num(edit.amount):''}" placeholder="0.00" style="font-size:16px"></div>
+    <div class="field" style="margin-top:12px"><label>备注</label><input type="text" id="initialItemNote" value="${esc(edit&&edit.note?edit.note:'')}" placeholder="用途、时间、特殊情况…" style="font-size:16px"></div>
     <div class="actions" style="margin-top:18px;justify-content:flex-end">
       <button class="btn ghost sm" onclick="closeInitialItemModal()">取消</button>
       <button class="btn sm" onclick="confirmAddInitialItem('${key}')">确定</button>
@@ -1107,16 +1124,29 @@ function openInitialItemModal(key){
 }
 function closeInitialItemModal(){const b=document.getElementById('initialModalBackdrop');if(b)b.remove();}
 function confirmAddInitialItem(key){
+  const modal=q('#initialModalBackdrop .modal');
+  const editIdx=modal.getAttribute('data-idx');
   const name=document.getElementById('initialItemName').value.trim();
   const amount=num(document.getElementById('initialItemAmount').value);
+  const note=document.getElementById('initialItemNote').value.trim();
   if(!name){toast('请输入名称');return;}
   if(amount<=0){toast('请输入金额');return;}
   S.initial=getInitial();S.initial[key]=S.initial[key]||[];
-  if(key==='equipment') S.initial[key].push({id:'eq'+Date.now(),name,amount});
-  else {const qty=document.getElementById('initialItemQty').value.trim();S.initial[key].push({id:'iv'+Date.now(),name,qty,amount});}
-  closeInitialItemModal();save();renderInitial();toast('已添加');
+  const isEq=key==='equipment';
+  if(isEq){
+    const item={id:'eq'+Date.now(),name,amount,note};
+    if(editIdx!==''){const idx=parseInt(editIdx,10);if(S.initial[key][idx]){item.id=S.initial[key][idx].id;S.initial[key][idx]=item;}else{S.initial[key].push(item);}}
+    else S.initial[key].push(item);
+  }else{
+    const qty=document.getElementById('initialItemQty').value.trim();
+    const item={id:'iv'+Date.now(),name,qty,amount,note};
+    if(editIdx!==''){const idx=parseInt(editIdx,10);if(S.initial[key][idx]){item.id=S.initial[key][idx].id;S.initial[key][idx]=item;}else{S.initial[key].push(item);}}
+    else S.initial[key].push(item);
+  }
+  closeInitialItemModal();save();renderInitial();toast(editIdx!==''?'已更新':'已添加');
 }
 function addInitialItem(key){openInitialItemModal(key);}
+function editInitialItem(key,idx){openInitialItemModal(key,idx);}
 function delInitialItem(key,idx){
   const ini=getInitial();const items=ini[key];if(!items||!items[idx])return;
   const it=items[idx];const label=key==='equipment'?'设备':'食材/包材';
@@ -1158,10 +1188,10 @@ function renderPurchase(){
     tr.innerHTML=`<td>${p.date||''}</td><td>${esc(p.name)}</td><td>${esc(p.weight||'')}</td><td>${esc(p.use||'')}</td>
       <td><span class="pill n">${p.cat}</span></td>
       <td>${esc(p.channel||'')}</td><td>${money(p.amount)}</td>
-      <td><button class="btn ghost sm" onclick="delPurchase('${p.id}')">删</button></td>`;
+      <td><button class="btn ghost xs" onclick="delPurchase('${p.id}')">删</button></td>`;
     tb.appendChild(tr);});
   q('#purTable tfoot').innerHTML=
-    `<tr class="tot"><td colspan="5">合计（${list.length} 项）</td><td>${money(total)}</td><td></td></tr>`;
+    `<tr class="tot"><td colspan="6">合计（${list.length} 项）</td><td>${money(total)}</td><td></td></tr>`;
   document.getElementById('purMonthTotal').value=money(total);
   let html='';CATS.forEach(c=>{if(catSum[c])html+=stat(c,money(catSum[c]));});
   document.getElementById('purCatSummary').innerHTML=html||stat('暂无数据','¥0.00');
@@ -1181,12 +1211,12 @@ function addPurchase(){
   document.getElementById('purName').value='';document.getElementById('purWeight').value='';document.getElementById('purUse').value='';
   document.getElementById('purAmt').value='';
   document.getElementById('autoCatHint').textContent='输入名称或用途后将自动判断分类，也可手动选择。';
-  renderPurchase();toast('已添加');
+  renderPurchase();renderMonthly();toast('已添加');
 }
 function delPurchase(id){const item=(S.purchase||[]).find(p=>p.id===id);
   if(!item)return;
   addToTrash('purchase',item,'进货 '+item.date+' '+item.name);
-  S.purchase=S.purchase.filter(p=>p.id!==id);save();renderPurchase();toast('已移入回收站');}
+  S.purchase=S.purchase.filter(p=>p.id!==id);save();renderPurchase();renderMonthly();toast('已移入回收站');}
 function exportPurchaseCSV(){
   const m=document.getElementById('purMonth').value||'';
   let list=(S.purchase||[]).filter(p=>!m||(p.date||'').startsWith(m));
