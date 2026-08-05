@@ -174,17 +174,18 @@
   .field.currency-field .currency{position:absolute;left:12px;bottom:10px;font-size:13px;color:var(--muted);font-weight:600;pointer-events:none;z-index:2}
   .field.currency-field input{padding-left:26px}
   .muted{color:var(--muted);font-size:11px}
-  .rent-split{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
-  .rent-left{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
-  .rent-right{display:flex;flex-direction:column}
-  .rent-right textarea{width:100%;min-height:140px;resize:vertical;line-height:1.6;padding:10px 12px}
+  .rent-item{margin-bottom:18px}
+  .rent-item:last-child{margin-bottom:0}
+  .rent-item-labels{display:grid;grid-template-columns:1fr 1fr 90px;gap:12px;margin-bottom:6px;padding:0 4px;font-size:11px;color:var(--muted);font-weight:600}
+  .rent-item-row{display:grid;grid-template-columns:1fr 1fr 90px;gap:12px;align-items:center}
+  .rent-item-row input{font-size:16px;padding:7px 10px}
+  .rent-item-row input:disabled{background:rgba(255,255,255,0.22);opacity:0.75}
+  .rent-item-row .btn{width:100%;text-align:center;padding:8px 0}
   @media(max-width:640px){
-    .rent-split{grid-template-columns:1fr}
-    .rent-left{grid-template-columns:1fr 1fr}
-    .rent-right textarea{min-height:110px}
-  }
-  @media(max-width:420px){
-    .rent-left{grid-template-columns:1fr}
+    .rent-item-labels{grid-template-columns:1fr 1fr 70px;gap:8px;font-size:10px}
+    .rent-item-row{grid-template-columns:1fr 1fr 70px;gap:8px}
+    .rent-item-row input{padding:6px 8px}
+    .rent-item-row .btn{padding:7px 0;font-size:10px}
   }
 </style>
 </head>
@@ -383,20 +384,7 @@
     </div>
     <div class="card">
       <h2>🏠 房租与硬装</h2>
-      <div class="rent-split">
-        <div class="rent-left">
-          <div class="field currency-field"><label>租房押金</label><span class="currency">¥</span><input type="number" step="0.01" id="iniDeposit" oninput="onInitialEdit()"></div>
-          <div class="field currency-field"><label>首期房租</label><span class="currency">¥</span><input type="number" step="0.01" id="iniFirstRent" oninput="onInitialEdit()"></div>
-          <div class="field currency-field"><label>消防改造</label><span class="currency">¥</span><input type="number" step="0.01" id="iniFire" oninput="onInitialEdit()"></div>
-          <div class="field currency-field"><label>装修金额</label><span class="currency">¥</span><input type="number" step="0.01" id="iniRenovation" oninput="onInitialEdit()"></div>
-        </div>
-        <div class="rent-right">
-          <div class="field" style="height:100%;display:flex;flex-direction:column">
-            <label>📝 备注</label>
-            <textarea id="iniRentNote" placeholder="备注这笔钱是什么时候用在什么地方，当时有没有什么特殊情况…" oninput="onInitialEdit()" style="flex:1;min-height:120px;line-height:1.6"></textarea>
-          </div>
-        </div>
-      </div>
+      <div id="rentItems"></div>
     </div>
     <div class="card">
       <h2>📄 证件办理</h2>
@@ -522,13 +510,28 @@ function load(){
       merged.funds.workingItems=[];
       if(num(merged.funds.working)!==0) merged.funds.workingItems.push({id:'migw'+Date.now(),date:today(),account:'历史结余',amount:num(merged.funds.working),locked:true});
     }
+    if(merged.initial) merged.initial=migrateInitial(merged.initial);
     return merged;
   }catch(e){return def()}
+}
+function migrateInitial(ini){
+  const items=['deposit','firstRent','fire','renovation'];
+  items.forEach(k=>{
+    if(!ini[k] || typeof ini[k]!=='object' || Array.isArray(ini[k])){
+      const oldAmount=num(ini[k]);
+      ini[k]={amount:oldAmount,note:'',locked:false};
+    }else{
+      ini[k].amount=num(ini[k].amount);
+      ini[k].note=ini[k].note||'';
+      ini[k].locked=!!ini[k].locked;
+    }
+  });
+  return ini;
 }
 function def(){return{settings:{profitRate:60,rent:0,utility:0,wage:0},
   draft:{},records:[],monthly:{},
   funds:{working:0,original:0,fixed:0,updated:'',ledger:[],fixedItems:[],workingItems:[]},
-  initial:{deposit:0,firstRent:0,fire:0,license:{business:0,food:0},renovation:0,equipment:[],inventory:[],takeaway:0,pos:0,rentNote:''},
+  initial:{deposit:{amount:0,note:'',locked:false},firstRent:{amount:0,note:'',locked:false},fire:{amount:0,note:'',locked:false},renovation:{amount:0,note:'',locked:false},license:{business:0,food:0},equipment:[],inventory:[],takeaway:0,pos:0},
   purchase:[],trash:[]}}
 function save(){localStorage.setItem(KEY,JSON.stringify(S));toast('已保存')}
 function num(v){const n=parseFloat((''+v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n}
@@ -985,13 +988,15 @@ function delLedger(i){
 
 /* ---------- 初始投入 ---------- */
 function getInitial(){return S.initial||def().initial;}
+const RENT_KEYS=[
+  {k:'deposit',label:'租房押金'},
+  {k:'firstRent',label:'首期房租'},
+  {k:'fire',label:'消防改造'},
+  {k:'renovation',label:'装修金额'}
+];
 function renderInitial(){
   const ini=getInitial();
-  document.getElementById('iniDeposit').value=ini.deposit||'';
-  document.getElementById('iniFirstRent').value=ini.firstRent||'';
-  document.getElementById('iniFire').value=ini.fire||'';
-  document.getElementById('iniRenovation').value=ini.renovation||'';
-  document.getElementById('iniRentNote').value=ini.rentNote||'';
+  renderRentItems();
   document.getElementById('iniLicenseBusiness').value=(ini.license&&ini.license.business)||'';
   document.getElementById('iniLicenseFood').value=(ini.license&&ini.license.food)||'';
   document.getElementById('iniTakeaway').value=ini.takeaway||'';
@@ -1000,10 +1005,48 @@ function renderInitial(){
   renderInitialList('inventory','iniInventoryTable','iniInventoryTag',['name','qty','amount'],['名称','数量','金额'],it=>money(it.amount));
   renderInitialSummary();
 }
+function renderRentItems(){
+  const ini=getInitial();
+  const wrap=document.getElementById('rentItems');
+  let html='';
+  RENT_KEYS.forEach(({k,label})=>{
+    const it=ini[k]||{amount:0,note:'',locked:false};
+    const disabled=it.locked?'disabled':'';
+    const btnLabel=it.locked?'编辑':'确定';
+    const btnClass=it.locked?'btn ghost sm':'btn sm';
+    html+=`
+    <div class="rent-item" data-key="${k}">
+      <div class="rent-item-labels"><span>${label}</span><span>备注</span><span></span></div>
+      <div class="rent-item-row">
+        <div class="field currency-field"><span class="currency">¥</span><input type="number" step="0.01" class="rent-amt" data-key="${k}" value="${it.amount||''}" oninput="onRentInput('${k}')" ${disabled}></div>
+        <div class="field"><input type="text" class="rent-note" data-key="${k}" value="${esc(it.note||'')}" placeholder="什么时候用、用在哪、特殊情况…" oninput="onRentInput('${k}')" ${disabled}></div>
+        <button type="button" class="${btnClass}" onclick="toggleRentLock('${k}')">${btnLabel}</button>
+      </div>
+    </div>`;
+  });
+  wrap.innerHTML=html;
+}
+function onRentInput(key){
+  const ini=getInitial();
+  if(!ini[key] || typeof ini[key]!=='object') ini[key]={amount:0,note:'',locked:false};
+  ini[key].amount=num(q(`.rent-amt[data-key="${key}"]`).value);
+  ini[key].note=q(`.rent-note[data-key="${key}"]`).value;
+  S.initial=ini;
+  clearTimeout(window._rentT);window._rentT=setTimeout(save,500);
+  renderInitialSummary();
+}
+function toggleRentLock(key){
+  const ini=getInitial();
+  if(!ini[key] || typeof ini[key]!=='object') ini[key]={amount:0,note:'',locked:false};
+  ini[key].locked=!ini[key].locked;
+  S.initial=ini;
+  save();
+  renderRentItems();
+}
 function renderInitialSummary(){
   const ini=getInitial();
   const license=(ini.license||{});
-  const fixed=num(ini.deposit)+num(ini.firstRent)+num(ini.fire)+num(license.business)+num(license.food)+num(ini.renovation)+num(ini.takeaway)+num(ini.pos);
+  const fixed=num(ini.deposit.amount)+num(ini.firstRent.amount)+num(ini.fire.amount)+num(license.business)+num(license.food)+num(ini.renovation.amount)+num(ini.takeaway)+num(ini.pos);
   const equipTotal=(ini.equipment||[]).reduce((s,it)=>s+num(it.amount),0);
   const invTotal=(ini.inventory||[]).reduce((s,it)=>s+num(it.amount),0);
   const total=fixed+equipTotal+invTotal;
@@ -1015,11 +1058,6 @@ function renderInitialSummary(){
 }
 function onInitialEdit(){
   S.initial=getInitial();
-  S.initial.deposit=num(document.getElementById('iniDeposit').value);
-  S.initial.firstRent=num(document.getElementById('iniFirstRent').value);
-  S.initial.fire=num(document.getElementById('iniFire').value);
-  S.initial.renovation=num(document.getElementById('iniRenovation').value);
-  S.initial.rentNote=document.getElementById('iniRentNote').value;
   S.initial.license={business:num(document.getElementById('iniLicenseBusiness').value),food:num(document.getElementById('iniLicenseFood').value)};
   S.initial.takeaway=num(document.getElementById('iniTakeaway').value);
   S.initial.pos=num(document.getElementById('iniPos').value);
