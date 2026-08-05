@@ -282,7 +282,8 @@
         <div class="field currency-field"><label>成本合计（房租+水电+工资+进货+其他）</label><span class="currency">¥</span><input id="monthCostTotal" disabled></div>
         <div class="field currency-field"><label>固定成本合计（房租+水电+工资）</label><span class="currency">¥</span><input id="monthFixedTotal" disabled></div>
       </div>
-      <div class="actions" style="justify-content:flex-end;margin-top:14px">
+      <div class="actions" style="justify-content:space-between;margin-top:14px">
+        <button class="btn sm" onclick="saveMonthCosts()">✅ 确定保存</button>
         <button class="btn ghost sm" onclick="openAddExtraModal()">➕ 添加成本</button>
       </div>
     </div>
@@ -761,7 +762,18 @@ function onMonthCostEdit(){
   S.monthly[m].utility=num(document.getElementById('mUtility').value);
   S.monthly[m].wage=num(document.getElementById('mWage').value);
   S.monthly[m].purchase=num(document.getElementById('mPurchase').value);
-  renderMonthly();save();
+  renderMonthly();
+}
+function saveMonthCosts(){
+  const m=document.getElementById('monthPick').value;
+  S.monthly[m]=S.monthly[m]||{extras:[]};
+  S.monthly[m].rent=num(document.getElementById('mRent').value);
+  S.monthly[m].utility=num(document.getElementById('mUtility').value);
+  S.monthly[m].wage=num(document.getElementById('mWage').value);
+  S.monthly[m].purchase=num(document.getElementById('mPurchase').value);
+  save();
+  renderMonthly();
+  toast('已保存当月成本明细');
 }
 function getMonthStats(m){
   const mc=getMonthCosts(m);
@@ -835,7 +847,6 @@ function onExtraEdit(i,v){
   const m=document.getElementById('monthPick').value;
   if(!S.monthly[m]||!S.monthly[m].extras||!S.monthly[m].extras[i])return;
   S.monthly[m].extras[i].amount=num(v);
-  save();
   const mc=getMonthCosts(m);
   const fixed=mc.rent+mc.utility+mc.wage;
   const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
