@@ -275,7 +275,7 @@
       </div>
       <div class="row grid2" style="margin-top:12px">
         <div class="field currency-field"><label>工资发放</label><span class="currency">¥</span><input type="number" id="mWage" oninput="onMonthCostEdit()"></div>
-        <div class="field currency-field"><label>进货成本（默认当月进货合计，可改）</label><span class="currency">¥</span><input type="number" id="mPurchase" oninput="onMonthCostEdit()"></div>
+        <div class="field currency-field"><label>进货成本（自动读取当月进货合计）</label><span class="currency">¥</span><input type="number" id="mPurchase" readonly tabindex="-1" style="background:var(--disabled-bg,#f3f4f6);color:var(--muted);cursor:not-allowed"></div>
       </div>
       <div id="monthExtras" style="margin-top:12px"></div>
       <div class="row grid2" style="margin-top:12px">
@@ -761,7 +761,7 @@ function onMonthCostEdit(){
   S.monthly[m].rent=num(document.getElementById('mRent').value);
   S.monthly[m].utility=num(document.getElementById('mUtility').value);
   S.monthly[m].wage=num(document.getElementById('mWage').value);
-  S.monthly[m].purchase=num(document.getElementById('mPurchase').value);
+  S.monthly[m].purchase=monthPurchaseDefault(m);
   renderMonthly();
 }
 function saveMonthCosts(){
@@ -770,7 +770,7 @@ function saveMonthCosts(){
   S.monthly[m].rent=num(document.getElementById('mRent').value);
   S.monthly[m].utility=num(document.getElementById('mUtility').value);
   S.monthly[m].wage=num(document.getElementById('mWage').value);
-  S.monthly[m].purchase=num(document.getElementById('mPurchase').value);
+  S.monthly[m].purchase=monthPurchaseDefault(m);
   save();
   renderMonthly();
   toast('已保存当月成本明细');
