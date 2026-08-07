@@ -163,9 +163,10 @@
   .initial-item-table td:last-child,.initial-item-table th:last-child{text-align:right;white-space:nowrap}
   .initial-item-table td:last-child .btn{margin:0 2px}
   .purchase-table{table-layout:fixed;width:100%;min-width:720px!important}
-  .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .purchase-table td:last-child,.purchase-table th:last-child{text-align:right}
+  .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
   .purchase-table td:nth-child(7),.purchase-table th:nth-child(7){text-align:right}
+  .purchase-table td:last-child,.purchase-table th:last-child{text-align:right;white-space:nowrap}
+  .purchase-table td:last-child .btn{margin:0 2px}
   .month-detail-table{table-layout:fixed;width:100%;min-width:860px!important}
   .month-detail-table th,.month-detail-table td{text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .month-detail-table th:first-child,.month-detail-table td:first-child{text-align:left}
@@ -217,8 +218,8 @@
 <nav id="nav">
   <button data-tab="daily" class="active" onclick="switchTab('daily')">📅 每日记账</button>
   <button data-tab="monthly" onclick="switchTab('monthly')">📊 月度统计</button>
-  <button data-tab="funds" onclick="switchTab('funds')">💰 资金记录</button>
   <button data-tab="purchase" onclick="switchTab('purchase')">🛒 进货清单</button>
+  <button data-tab="funds" onclick="switchTab('funds')">💰 资金记录</button>
   <button data-tab="initial" onclick="switchTab('initial')">🚀 初始投入</button>
   <button data-tab="trash" onclick="switchTab('trash')">🗑️ 回收站</button>
   <button data-tab="settings" onclick="switchTab('settings')">⚙️ 设置</button>
@@ -396,7 +397,7 @@
     <div class="card">
       <h2>📋 进货明细</h2>
       <table id="purTable" class="purchase-table">
-        <thead><tr><th style="width:14%">日期</th><th style="width:20%">名称</th><th style="width:12%">重量/数量</th><th style="width:16%">用途</th><th style="width:12%">分类</th><th style="width:10%">途径</th><th style="width:12%">金额</th><th style="width:4%"></th></tr></thead>
+        <thead><tr><th style="width:13%">日期</th><th style="width:18%">名称</th><th style="width:11%">重量/数量</th><th style="width:14%">用途</th><th style="width:11%">分类</th><th style="width:9%">途径</th><th style="width:11%">金额</th><th style="width:13%">操作</th></tr></thead>
         <tbody></tbody><tfoot></tfoot>
       </table>
     </div>
@@ -596,7 +597,8 @@ function renderBlock(block){
     block.cols.forEach(col=>{const ph=col.f==='m'?S.settings.profitRate:'';
       const step=col.f==='m'?'0.1':'0.01';
       const showVal=(d[col.f]!==undefined && d[col.f]!=='' && num(d[col.f])>0)?d[col.f]:'';
-      html+=`<td><input type="number" step="${step}" placeholder="${ph}" value="${showVal}" data-ch="${c.k}" data-f="${col.f}" oninput="onDayInput()"></td>`;});
+      const widthStyle=col.f==='m'?' style="width:50%"':'';
+      html+=`<td><input type="number" step="${step}" placeholder="${ph}" value="${showVal}" data-ch="${c.k}" data-f="${col.f}" oninput="onDayInput()"${widthStyle}></td>`;});
     html+=`<td><span id="profit_${c.k}" class="${profit<0?'neg':'pos'}">${money(profit)}</span></td></tr>`;});
   html+=`</tbody></table>`;
   html+=`<div class="actions" style="margin-top:12px"><button class="btn" onclick="saveBlock('${block.key}')">保存为明细（清空方框）</button></div>`;
@@ -1265,7 +1267,7 @@ function renderPurchase(){
     tr.innerHTML=`<td>${p.date||''}</td><td>${esc(p.name)}</td><td>${esc(p.weight||'')}</td><td>${esc(p.use||'')}</td>
       <td><span class="pill n">${p.cat}</span></td>
       <td>${esc(p.channel||'')}</td><td>${money(p.amount)}</td>
-      <td><button class="btn ghost xs" onclick="delPurchase('${p.id}')">删</button></td>`;
+      <td><button class="btn ghost xs" onclick="editPurchase('${p.id}')">编辑</button><button class="btn ghost xs" onclick="delPurchase('${p.id}')" style="color:var(--red)">删除</button></td>`;
     tb.appendChild(tr);});
   q('#purTable tfoot').innerHTML=
     `<tr class="tot"><td colspan="6">合计（${list.length} 项）</td><td>${money(total)}</td><td></td></tr>`;
@@ -1290,10 +1292,61 @@ function addPurchase(){
   document.getElementById('autoCatHint').textContent='输入名称或用途后将自动判断分类，也可手动选择。';
   renderPurchase();renderMonthly();toast('已添加');
 }
+function editPurchase(id){
+  const item=(S.purchase||[]).find(p=>p.id===id);
+  if(!item)return;
+  if(document.getElementById('purchaseModalBackdrop'))return;
+  const backdrop=document.createElement('div');
+  backdrop.className='modal-backdrop';backdrop.id='purchaseModalBackdrop';
+  backdrop.innerHTML=`<div class="modal" data-id="${id}">
+    <h2>编辑进货项</h2>
+    <div class="field" style="margin-top:14px"><label>名称</label><input type="text" id="editPurName" value="${esc(item.name||'')}" placeholder="如：高筋面粉" oninput="editAutoCat()" style="font-size:16px"></div>
+    <div class="field" style="margin-top:12px"><label>重量/数量</label><input type="text" id="editPurWeight" value="${esc(item.weight||'')}" placeholder="如：25kg / 3箱 / 500g" style="font-size:16px"></div>
+    <div class="field" style="margin-top:12px"><label>用途</label><input type="text" id="editPurUse" value="${esc(item.use||'')}" placeholder="如：做面包" oninput="editAutoCat()" style="font-size:16px"></div>
+    <div class="row grid2" style="margin-top:12px">
+      <div class="field"><label>分类（自动识别，可改）</label><select id="editPurCat" style="font-size:16px">${CATS.map(c=>`<option value="${c}"${(item.cat||'')===c?' selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>下单途径</label>
+        <select id="editPurChannel" style="font-size:16px">
+          ${['美团','淘宝','淘宝闪购','京东','拼多多','线下','其他'].map(c=>`<option value="${c}"${(item.channel||'')===c?' selected':''}>${c}</option>`).join('')}
+        </select></div>
+    </div>
+    <div class="row grid2" style="margin-top:12px">
+      <div class="field"><label>金额</label><input type="number" step="0.01" id="editPurAmt" value="${num(item.amount)}" placeholder="0.00" style="font-size:16px"></div>
+      <div class="field"><label>进货日期</label><input type="date" id="editPurDate" value="${item.date||''}" style="font-size:16px"></div>
+    </div>
+    <div class="actions" style="margin-top:18px;justify-content:flex-end">
+      <button class="btn ghost sm" onclick="closePurchaseModal()">取消</button>
+      <button class="btn sm" onclick="confirmEditPurchase()">确定</button>
+    </div>
+  </div>`;
+  document.body.appendChild(backdrop);
+}
+function closePurchaseModal(){const b=document.getElementById('purchaseModalBackdrop');if(b)b.remove();}
+function editAutoCat(){const g=guessCategory(document.getElementById('editPurName').value,document.getElementById('editPurUse').value);document.getElementById('editPurCat').value=g;}
+function confirmEditPurchase(){
+  const modal=q('#purchaseModalBackdrop .modal');
+  const id=modal.getAttribute('data-id');
+  const item=(S.purchase||[]).find(p=>p.id===id);
+  if(!item)return;
+  const name=document.getElementById('editPurName').value.trim();
+  const amount=num(document.getElementById('editPurAmt').value);
+  if(!name){toast('请填写名称');return;}
+  if(amount===0){toast('请填写金额');return;}
+  item.name=name;
+  item.weight=document.getElementById('editPurWeight').value.trim();
+  item.use=document.getElementById('editPurUse').value.trim();
+  item.cat=document.getElementById('editPurCat').value;
+  item.channel=document.getElementById('editPurChannel').value;
+  item.amount=amount;
+  item.date=document.getElementById('editPurDate').value||today();
+  closePurchaseModal();save();renderPurchase();renderMonthly();toast('已更新');
+}
 function delPurchase(id){const item=(S.purchase||[]).find(p=>p.id===id);
   if(!item)return;
-  addToTrash('purchase',item,'进货 '+item.date+' '+item.name);
-  S.purchase=S.purchase.filter(p=>p.id!==id);save();renderPurchase();renderMonthly();toast('已移入回收站');}
+  showConfirm('删除这条进货记录？删除后可到回收站恢复。', ()=>{
+    addToTrash('purchase',item,'进货 '+item.date+' '+item.name);
+    S.purchase=S.purchase.filter(p=>p.id!==id);save();renderPurchase();renderMonthly();toast('已移入回收站');
+  });}
 function exportPurchaseCSV(){
   const m=document.getElementById('purMonth').value||'';
   let list=(S.purchase||[]).filter(p=>!m||(p.date||'').startsWith(m));
