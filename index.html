@@ -1075,7 +1075,7 @@ function delFundItem(type,idx){
   });
 }
 function resetFund(type){
-  const name={working:'流动资金',fixed:'不动资金',original:'店铺原始资金'}[type]||type;
+  const name={working:'流动资金',fixed:'不动资金'}[type]||type;
   showConfirm('将「'+name+'」清零？原数值进入回收站，可恢复。', ()=>{
     addToTrash('fund',{type,value:num(S.funds[type])},'资金 '+name+' 清零');
     S.funds[type]=0;S.funds.updated=today();save();renderFunds();toast('已清零并移入回收站');
@@ -1107,7 +1107,7 @@ function addLedger(){
 function delLedger(i){
   const l=S.funds.ledger[i];
   if(!l)return;
-  const name={working:'流动资金',original:'店铺原始资金',fixed:'不动资金'}[l.type]||l.type;
+  const name={working:'流动资金',fixed:'不动资金'}[l.type]||l.type;
   addToTrash('ledger',l,'资金变动 '+l.date+' '+name+' '+(l.amt<0?money(l.amt):'+'+money(l.amt)));
   if(l.type==='working'){
     if(l.itemId) S.funds.workingItems=(S.funds.workingItems||[]).filter(it=>it.id!==l.itemId);
