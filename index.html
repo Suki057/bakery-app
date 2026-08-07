@@ -164,9 +164,21 @@
   .initial-item-table td:last-child .btn{margin:0 2px}
   .purchase-table{table-layout:fixed;width:100%;min-width:720px!important}
   .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
-  .purchase-table td:nth-child(7),.purchase-table th:nth-child(7){text-align:right}
-  .purchase-table td:last-child,.purchase-table th:last-child{text-align:right;white-space:nowrap}
+  .purchase-table td:nth-child(4),.purchase-table th:nth-child(4){text-align:left}
+  .purchase-table td:last-child,.purchase-table th:last-child{white-space:nowrap}
   .purchase-table td:last-child .btn{margin:0 2px}
+  .purchase-table tfoot td:last-child{text-align:right}
+  .daily-block-table{table-layout:auto;width:100%;min-width:320px}
+  .daily-block-table th,.daily-block-table td{text-align:left;white-space:nowrap;vertical-align:middle;padding:8px 6px}
+  .daily-block-table th:last-child,.daily-block-table td:last-child{text-align:right}
+  .daily-block-table td input[type="number"],.daily-block-table td input[type="text"]{width:100%;padding:5px 8px;border-radius:10px;font-size:16px}
+  .daily-block-table td input[data-f="m"]{width:60px}
+  .daily-block-table td input[data-f="r"]{min-width:80px}
+  .daily-block-table td input[data-f="n"]{min-width:80px}
+  @media(max-width:640px){
+    .daily-block-table td input[data-f="m"]{width:52px}
+    .daily-block-table th,.daily-block-table td{padding:7px 4px}
+  }
   .month-detail-table{table-layout:fixed;width:100%;min-width:860px!important}
   .month-detail-table th,.month-detail-table td{text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .month-detail-table th:first-child,.month-detail-table td:first-child{text-align:left}
@@ -276,12 +288,15 @@
       </div>
       <div class="row grid2" style="margin-top:12px">
         <div class="field currency-field"><label>工资发放</label><span class="currency">¥</span><input type="number" id="mWage" oninput="onMonthCostEdit()"></div>
+        <div class="field currency-field"><label>外卖平台营销</label><span class="currency">¥</span><input type="number" id="mMarketing" oninput="onMonthCostEdit()"></div>
+      </div>
+      <div class="row grid2" style="margin-top:12px">
         <div class="field currency-field"><label>进货成本（自动读取当月进货合计）</label><span class="currency">¥</span><input type="number" id="mPurchase" readonly tabindex="-1" style="background:var(--disabled-bg,#f3f4f6);color:var(--muted);cursor:not-allowed"></div>
       </div>
       <div id="monthExtras" style="margin-top:12px"></div>
       <div class="row grid2" style="margin-top:12px">
-        <div class="field currency-field"><label>成本合计（房租+水电+工资+进货+其他）</label><span class="currency">¥</span><input id="monthCostTotal" disabled></div>
         <div class="field currency-field"><label>固定成本合计（房租+水电+工资）</label><span class="currency">¥</span><input id="monthFixedTotal" disabled></div>
+        <div class="field currency-field"><label>成本合计（房租+水电+工资+进货+营销+其他）</label><span class="currency">¥</span><input id="monthCostTotal" disabled></div>
       </div>
       <div class="actions" style="justify-content:space-between;margin-top:14px">
         <button class="btn sm" onclick="saveMonthCosts()">✅ 确定保存</button>
@@ -369,12 +384,7 @@
         <div class="field"><label>重量/数量</label><input type="text" id="purWeight" placeholder="如：25kg / 3箱 / 500g"></div>
       </div>
       <div class="row grid2" style="margin-top:12px">
-        <div class="field"><label>用途</label><input type="text" id="purUse" placeholder="如：做面包" oninput="autoCat()"></div>
-        <div class="field"><label>分类（自动识别，可改）</label><select id="purCat"></select></div>
-      </div>
-      <div class="row grid3" style="margin-top:12px">
-        <div class="field"><label>金额</label><input type="number" step="0.01" id="purAmt"></div>
-        <div class="field"><label>进货日期</label><input type="date" id="purDate"></div>
+        <div class="field"><label>用途（分类）</label><select id="purCat" onchange="onPurCatChange()"></select><input type="text" id="purCatOther" placeholder="输入新分类" style="display:none"><button type="button" id="purCatBack" class="btn ghost xs" style="display:none;margin-top:6px" onclick="resetPurCat()">返回选择分类</button></div>
         <div class="field"><label>下单途径</label>
           <select id="purChannel">
             <option value="美团">美团</option>
@@ -386,10 +396,14 @@
             <option value="其他">其他</option>
           </select></div>
       </div>
+      <div class="row grid2" style="margin-top:12px">
+        <div class="field"><label>金额</label><input type="number" step="0.01" id="purAmt"></div>
+        <div class="field"><label>进货日期</label><input type="date" id="purDate"></div>
+      </div>
     <div class="row" style="margin-top:12px;display:flex;justify-content:flex-end">
       <button class="btn" onclick="addPurchase()">添加</button>
     </div>
-    <div class="hint" id="autoCatHint">输入名称或用途后将自动判断分类，也可手动选择。</div>
+    <div class="hint" id="autoCatHint">输入名称后将自动判断分类，也可手动选择。选「其他」可输入新分类。</div>
       <div class="actions" style="margin-top:12px">
         <button class="btn ghost sm" onclick="exportPurchaseCSV()">导出 CSV</button>
       </div>
@@ -397,7 +411,7 @@
     <div class="card">
       <h2>📋 进货明细</h2>
       <table id="purTable" class="purchase-table">
-        <thead><tr><th style="width:13%">日期</th><th style="width:18%">名称</th><th style="width:11%">重量/数量</th><th style="width:14%">用途</th><th style="width:11%">分类</th><th style="width:9%">途径</th><th style="width:11%">金额</th><th style="width:13%">操作</th></tr></thead>
+        <thead><tr><th style="width:13%">日期</th><th style="width:20%">名称</th><th style="width:13%">重量/数量</th><th style="width:24%">用途（分类）</th><th style="width:12%">途径</th><th style="width:18%">操作</th></tr></thead>
         <tbody></tbody><tfoot></tfoot>
       </table>
     </div>
@@ -506,6 +520,7 @@ function useM(m){return (m===''||m==null)?S.settings.profitRate:m;}
 function calcProfitSimple(base,m){const b=num(base),M=num(m);return b*M/100;}
 const CATS=['食材','店铺日用品','慰劳员工','客户售后','营销费用','节日装扮','其他'];
 const TRASH_DAYS=21;
+function getCats(){return (S.cats&&S.cats.length)?S.cats:CATS;}
 let S=load();
 
 function load(){
@@ -515,6 +530,7 @@ function load(){
     const d=JSON.parse(raw);
     if(!d||!d.funds)return def();
     const merged=Object.assign(def(),d);
+    if(!Array.isArray(merged.cats)||!merged.cats.length)merged.cats=CATS.slice();
     if(!Array.isArray(merged.funds.fixedItems)){
       merged.funds.fixedItems=[];
       if(num(merged.funds.fixed)!==0) merged.funds.fixedItems.push({id:'migf'+Date.now(),date:today(),account:'历史结余',amount:num(merged.funds.fixed),locked:true});
@@ -524,8 +540,20 @@ function load(){
       if(num(merged.funds.working)!==0) merged.funds.workingItems.push({id:'migw'+Date.now(),date:today(),account:'历史结余',amount:num(merged.funds.working),locked:true});
     }
     if(merged.initial) merged.initial=migrateInitial(merged.initial);
+    if(merged.monthly) merged.monthly=migrateMonthlyMarketing(merged.monthly);
     return merged;
   }catch(e){return def()}
+}
+function migrateMonthlyMarketing(monthly){
+  if(!monthly)return monthly;
+  Object.keys(monthly).forEach(m=>{
+    const mo=monthly[m];if(!mo)return;
+    if(Array.isArray(mo.extras)){
+      const idx=mo.extras.findIndex(e=>e.name==='营销' || e.name==='外卖平台营销');
+      if(idx>=0){mo.marketing=num(mo.extras[idx].amount);mo.extras.splice(idx,1);if(!mo.extras.length)delete mo.extras;}
+    }
+  });
+  return monthly;
 }
 function migrateInitial(ini){
   const items=['deposit','firstRent','fire','renovation','takeaway','pos','pastCost'];
@@ -553,7 +581,7 @@ function def(){return{settings:{profitRate:60,rent:0,utility:0,wage:0},
   draft:{},records:[],monthly:{},
   funds:{working:0,original:0,fixed:0,updated:'',ledger:[],fixedItems:[],workingItems:[]},
   initial:{deposit:{amount:0,note:'',locked:false},firstRent:{amount:0,note:'',locked:false},fire:{amount:0,note:'',locked:false},renovation:{amount:0,note:'',locked:false},takeaway:{amount:0,note:'',locked:false},pos:{amount:0,note:'',locked:false},pastCost:{amount:0,note:'',locked:false},equipment:[],inventory:[],summary:{total:'',fixed:'',equipment:'',inventory:''}},
-  purchase:[],trash:[]}}
+  cats:CATS.slice(),purchase:[],trash:[]}}
 function save(){localStorage.setItem(KEY,JSON.stringify(S));toast('已保存')}
 function num(v){const n=parseFloat((''+v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n}
 function ym(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
@@ -588,7 +616,7 @@ function renderBlock(block){
   const date=document.getElementById('dailyDate').value;
   const day=getDraft(date);
   let html=`<h2>${block.title}</h2>`;
-  html+=`<table><thead><tr><th>渠道</th>`;
+  html+=`<table class="daily-block-table"><thead><tr><th>渠道</th>`;
   block.cols.forEach(col=>{html+=`<th>${col.label}</th>`;});
   html+=`<th>利润</th></tr></thead><tbody>`;
   block.channels.forEach(c=>{const d=chDraft(day,c.k);
@@ -597,8 +625,7 @@ function renderBlock(block){
     block.cols.forEach(col=>{const ph=col.f==='m'?S.settings.profitRate:'';
       const step=col.f==='m'?'0.1':'0.01';
       const showVal=(d[col.f]!==undefined && d[col.f]!=='' && num(d[col.f])>0)?d[col.f]:'';
-      const widthStyle=col.f==='m'?' style="width:50%"':'';
-      html+=`<td><input type="number" step="${step}" placeholder="${ph}" value="${showVal}" data-ch="${c.k}" data-f="${col.f}" oninput="onDayInput()"${widthStyle}></td>`;});
+      html+=`<td><input type="number" step="${step}" placeholder="${ph}" value="${showVal}" data-ch="${c.k}" data-f="${col.f}" oninput="onDayInput()"></td>`;});
     html+=`<td><span id="profit_${c.k}" class="${profit<0?'neg':'pos'}">${money(profit)}</span></td></tr>`;});
   html+=`</tbody></table>`;
   html+=`<div class="actions" style="margin-top:12px"><button class="btn" onclick="saveBlock('${block.key}')">保存为明细（清空方框）</button></div>`;
@@ -720,8 +747,8 @@ function saveBlock(key){
 
 /* ---------- 月度 ---------- */
 function monthPurchaseDefault(m){return (S.purchase||[]).filter(p=>(p.date||'').startsWith(m)).reduce((s,p)=>s+num(p.amount),0);}
-function getMonthCosts(m){if(S.monthly[m]){S.monthly[m].extras=S.monthly[m].extras||[];return S.monthly[m];}
-  return {rent:num(S.settings.rent),utility:num(S.settings.utility),wage:num(S.settings.wage),purchase:monthPurchaseDefault(m),extras:[]};}
+function getMonthCosts(m){if(S.monthly[m]){S.monthly[m].extras=S.monthly[m].extras||[];S.monthly[m].marketing=num(S.monthly[m].marketing);return S.monthly[m];}
+  return {rent:num(S.settings.rent),utility:num(S.settings.utility),wage:num(S.settings.wage),marketing:0,purchase:monthPurchaseDefault(m),extras:[]};}
 function renderMonthly(){
   const m=document.getElementById('monthPick').value||ym(new Date());
   document.getElementById('monthPick').value=m;
@@ -730,11 +757,12 @@ function renderMonthly(){
   document.getElementById('mRent').value=mc.rent;
   document.getElementById('mUtility').value=mc.utility;
   document.getElementById('mWage').value=mc.wage;
+  document.getElementById('mMarketing').value=mc.marketing;
   document.getElementById('mPurchase').value=mc.purchase;
   renderMonthExtras(mc.extras);
   const fixed=mc.rent+mc.utility+mc.wage;
   const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
-  const costTotal=fixed+mc.purchase+extrasTotal;
+  const costTotal=fixed+mc.purchase+num(mc.marketing)+extrasTotal;
   document.getElementById('monthCostTotal').value=costTotal;
   document.getElementById('monthFixedTotal').value=fixed;
   const dayMap=monthDayMap(m);
@@ -742,7 +770,7 @@ function renderMonthly(){
   Object.values(dayMap).forEach(d=>{actualTurnover+=d.actualTurnover;actualProfit+=d.actualProfit;dailyTurnover+=d.dailyTurnover;});
   const gross=actualTurnover-mc.purchase;
   const grossRate=actualTurnover>0?(gross/actualTurnover)*100:0;
-  const net=actualTurnover-mc.purchase-fixed-extrasTotal;
+  const net=actualTurnover-mc.purchase-fixed-num(mc.marketing)-extrasTotal;
   document.getElementById('monthSummary').innerHTML=
     stat('毛利润',money(gross))+
     stat('毛利率',(actualTurnover>0?grossRate.toFixed(2):'0.00')+'%')+
@@ -763,6 +791,7 @@ function onMonthCostEdit(){
   S.monthly[m].rent=num(document.getElementById('mRent').value);
   S.monthly[m].utility=num(document.getElementById('mUtility').value);
   S.monthly[m].wage=num(document.getElementById('mWage').value);
+  S.monthly[m].marketing=num(document.getElementById('mMarketing').value);
   S.monthly[m].purchase=monthPurchaseDefault(m);
   renderMonthly();
 }
@@ -772,6 +801,7 @@ function saveMonthCosts(){
   S.monthly[m].rent=num(document.getElementById('mRent').value);
   S.monthly[m].utility=num(document.getElementById('mUtility').value);
   S.monthly[m].wage=num(document.getElementById('mWage').value);
+  S.monthly[m].marketing=num(document.getElementById('mMarketing').value);
   S.monthly[m].purchase=monthPurchaseDefault(m);
   save();
   renderMonthly();
@@ -780,7 +810,7 @@ function saveMonthCosts(){
 function getMonthStats(m){
   const mc=getMonthCosts(m);
   const fixed=mc.rent+mc.utility+mc.wage;
-  const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
+  const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0)+num(mc.marketing);
   const dayMap=monthDayMap(m);
   let actualTurnover=0,dailyTurnover=0,actualProfit=0;
   Object.values(dayMap).forEach(d=>{actualTurnover+=d.actualTurnover;dailyTurnover+=d.dailyTurnover;actualProfit+=d.actualProfit;});
@@ -836,7 +866,7 @@ function renderMonthExtras(extras){
   let html='<div class="row grid2">';
   extras.forEach((e,i)=>{
     html+=`<div class="field currency-field" style="position:relative">
-      <label style="padding-right:34px">${esc(e.name)}</label>
+      <label style="padding-right:34px">${esc(e.name==='营销'?'外卖平台营销':e.name)}</label>
       <button type="button" class="btn ghost xs" onclick="delExtra(${i})" style="position:absolute;right:0;top:-2px;margin:0">删</button>
       <span class="currency">¥</span>
       <input type="number" step="0.01" value="${e.amount}" oninput="onExtraEdit(${i},this.value)">
@@ -852,12 +882,12 @@ function onExtraEdit(i,v){
   const mc=getMonthCosts(m);
   const fixed=mc.rent+mc.utility+mc.wage;
   const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
-  document.getElementById('monthCostTotal').value=fixed+mc.purchase+extrasTotal;
+  document.getElementById('monthCostTotal').value=fixed+mc.purchase+num(mc.marketing)+extrasTotal;
   const dayMap=monthDayMap(m);
   let actualTurnover=0;Object.values(dayMap).forEach(d=>actualTurnover+=d.actualTurnover);
   const gross=actualTurnover-mc.purchase;
   const grossRate=actualTurnover>0?(gross/actualTurnover)*100:0;
-  const net=actualTurnover-mc.purchase-fixed-extrasTotal;
+  const net=actualTurnover-mc.purchase-fixed-num(mc.marketing)-extrasTotal;
   document.getElementById('monthSummary').innerHTML=
     stat('毛利润',money(gross))+
     stat('毛利率',(actualTurnover>0?grossRate.toFixed(2):'0.00')+'%')+
@@ -1236,8 +1266,36 @@ function delInitialItem(key,idx){
 }
 
 /* ---------- 进货清单 ---------- */
-function fillCatSelect(){const sel=document.getElementById('purCat');
-  if(sel.options.length)return;CATS.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}
+function fillCatSelect(selId,selected){
+  const sel=document.getElementById(selId);if(!sel)return;
+  sel.innerHTML='';
+  getCats().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;if(selected===c)o.selected=true;sel.appendChild(o);});
+}
+function onPurCatChange(){
+  const sel=document.getElementById('purCat'),other=document.getElementById('purCatOther'),back=document.getElementById('purCatBack');
+  if(sel.value==='其他'){sel.style.display='none';other.style.display='';if(back)back.style.display='';other.focus();}
+}
+function resetPurCat(){
+  const sel=document.getElementById('purCat'),other=document.getElementById('purCatOther'),back=document.getElementById('purCatBack');
+  sel.style.display='';other.style.display='none';other.value='';if(back)back.style.display='none';sel.value='食材';
+}
+function onEditPurCatChange(){
+  const sel=document.getElementById('editPurCat'),other=document.getElementById('editPurCatOther'),back=document.getElementById('editPurCatBack');
+  if(sel.value==='其他'){sel.style.display='none';other.style.display='';if(back)back.style.display='';other.focus();}
+}
+function resetEditPurCat(){
+  const sel=document.getElementById('editPurCat'),other=document.getElementById('editPurCatOther'),back=document.getElementById('editPurCatBack');
+  sel.style.display='';other.style.display='none';other.value='';if(back)back.style.display='none';sel.value='食材';
+}
+function resolveNewCat(selectId,otherId){
+  const sel=document.getElementById(selectId),other=document.getElementById(otherId);
+  if(sel.value==='其他' && other && other.style.display!=='none'){
+    const name=other.value.trim();if(!name){toast('请输入新分类名称');return null;}
+    if(!getCats().includes(name)){S.cats=S.cats||getCats().slice();S.cats.push(name);}
+    return name;
+  }
+  return sel.value;
+}
 function guessCategory(name,use){
   const t=(name+' '+use).toLowerCase();
   const map={
@@ -1251,12 +1309,12 @@ function guessCategory(name,use){
   for(const k in map){if(map[k].some(w=>t.includes(w)))return k;}
   return '其他';
 }
-function autoCat(){fillCatSelect();
-  const g=guessCategory(document.getElementById('purName').value,document.getElementById('purUse').value);
+function autoCat(){fillCatSelect('purCat');
+  const g=guessCategory(document.getElementById('purName').value,'');
   document.getElementById('purCat').value=g;
   document.getElementById('autoCatHint').textContent='自动识别分类：'+g+'（可手动修改）';}
 function renderPurchase(){
-  fillCatSelect();
+  fillCatSelect('purCat');
   const m=document.getElementById('purMonth').value||'';
   let list=(S.purchase||[]).filter(p=>!m||(p.date||'').startsWith(m));
   list.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
@@ -1264,47 +1322,55 @@ function renderPurchase(){
   let total=0;const catSum={};
   list.forEach(p=>{total+=num(p.amount);catSum[p.cat=p.cat||'其他']=(catSum[p.cat]||0)+num(p.amount);
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${p.date||''}</td><td>${esc(p.name)}</td><td>${esc(p.weight||'')}</td><td>${esc(p.use||'')}</td>
+    tr.innerHTML=`<td>${p.date||''}</td><td>${esc(p.name)}</td><td>${esc(p.weight||'')}</td>
       <td><span class="pill n">${p.cat}</span></td>
-      <td>${esc(p.channel||'')}</td><td>${money(p.amount)}</td>
+      <td>${esc(p.channel||'')}</td>
       <td><button class="btn ghost xs" onclick="editPurchase('${p.id}')">编辑</button><button class="btn ghost xs" onclick="delPurchase('${p.id}')" style="color:var(--red)">删除</button></td>`;
     tb.appendChild(tr);});
   q('#purTable tfoot').innerHTML=
-    `<tr class="tot"><td colspan="6">合计（${list.length} 项）</td><td>${money(total)}</td><td></td></tr>`;
+    `<tr class="tot"><td colspan="3">合计（${list.length} 项）</td><td></td><td></td><td style="text-align:right">${money(total)}</td></tr>`;
   document.getElementById('purMonthTotal').value=money(total);
-  let html='';CATS.forEach(c=>{if(catSum[c])html+=stat(c,money(catSum[c]));});
+  let html='';getCats().forEach(c=>{if(catSum[c])html+=stat(c,money(catSum[c]));});
   document.getElementById('purCatSummary').innerHTML=html||stat('暂无数据','¥0.00');
 }
 function addPurchase(){
-  fillCatSelect();
   const name=document.getElementById('purName').value.trim();
   const amount=num(document.getElementById('purAmt').value);
   if(!name){toast('请填写名称');return;}
   if(amount===0){toast('请填写金额');return;}
+  const cat=resolveNewCat('purCat','purCatOther');if(cat===null)return;
   S.purchase=S.purchase||[];
   S.purchase.push({id:'p'+Date.now(),name,weight:document.getElementById('purWeight').value.trim(),
-    use:document.getElementById('purUse').value.trim(),
+    use:'',
     amount,date:document.getElementById('purDate').value||today(),
-    channel:document.getElementById('purChannel').value,cat:document.getElementById('purCat').value});
+    channel:document.getElementById('purChannel').value,cat});
   save();
-  document.getElementById('purName').value='';document.getElementById('purWeight').value='';document.getElementById('purUse').value='';
-  document.getElementById('purAmt').value='';
-  document.getElementById('autoCatHint').textContent='输入名称或用途后将自动判断分类，也可手动选择。';
+  document.getElementById('purName').value='';document.getElementById('purWeight').value='';
+  document.getElementById('purAmt').value='';document.getElementById('purCatOther').value='';
+  const sel=document.getElementById('purCat'),other=document.getElementById('purCatOther'),back=document.getElementById('purCatBack');
+  sel.style.display='';other.style.display='none';if(back)back.style.display='none';
+  fillCatSelect('purCat','食材');
+  document.getElementById('autoCatHint').textContent='输入名称后将自动判断分类，也可手动选择。';
   renderPurchase();renderMonthly();toast('已添加');
 }
 function editPurchase(id){
   const item=(S.purchase||[]).find(p=>p.id===id);
   if(!item)return;
   if(document.getElementById('purchaseModalBackdrop'))return;
+  const cats=getCats();
+  const isOther=!cats.includes(item.cat);
   const backdrop=document.createElement('div');
   backdrop.className='modal-backdrop';backdrop.id='purchaseModalBackdrop';
   backdrop.innerHTML=`<div class="modal" data-id="${id}">
     <h2>编辑进货项</h2>
     <div class="field" style="margin-top:14px"><label>名称</label><input type="text" id="editPurName" value="${esc(item.name||'')}" placeholder="如：高筋面粉" oninput="editAutoCat()" style="font-size:16px"></div>
     <div class="field" style="margin-top:12px"><label>重量/数量</label><input type="text" id="editPurWeight" value="${esc(item.weight||'')}" placeholder="如：25kg / 3箱 / 500g" style="font-size:16px"></div>
-    <div class="field" style="margin-top:12px"><label>用途</label><input type="text" id="editPurUse" value="${esc(item.use||'')}" placeholder="如：做面包" oninput="editAutoCat()" style="font-size:16px"></div>
     <div class="row grid2" style="margin-top:12px">
-      <div class="field"><label>分类（自动识别，可改）</label><select id="editPurCat" style="font-size:16px">${CATS.map(c=>`<option value="${c}"${(item.cat||'')===c?' selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>用途（分类）</label>
+        <select id="editPurCat" onchange="onEditPurCatChange()" style="font-size:16px">${cats.map(c=>`<option value="${c}"${(!isOther && item.cat===c)?' selected':''}>${c}</option>`).join('')}</select>
+        <input type="text" id="editPurCatOther" value="${isOther?esc(item.cat||''):''}" placeholder="输入新分类" style="font-size:16px;display:${isOther?'':'none'}">
+        <button type="button" id="editPurCatBack" class="btn ghost xs" style="margin-top:6px;display:${isOther?'':'none'}" onclick="resetEditPurCat()">返回选择分类</button>
+      </div>
       <div class="field"><label>下单途径</label>
         <select id="editPurChannel" style="font-size:16px">
           ${['美团','淘宝','淘宝闪购','京东','拼多多','线下','其他'].map(c=>`<option value="${c}"${(item.channel||'')===c?' selected':''}>${c}</option>`).join('')}
@@ -1320,9 +1386,10 @@ function editPurchase(id){
     </div>
   </div>`;
   document.body.appendChild(backdrop);
+  if(isOther){const sel=document.getElementById('editPurCat');sel.value='其他';sel.style.display='none';}
 }
 function closePurchaseModal(){const b=document.getElementById('purchaseModalBackdrop');if(b)b.remove();}
-function editAutoCat(){const g=guessCategory(document.getElementById('editPurName').value,document.getElementById('editPurUse').value);document.getElementById('editPurCat').value=g;}
+function editAutoCat(){const g=guessCategory(document.getElementById('editPurName').value,'');const sel=document.getElementById('editPurCat');if(sel&&sel.style.display!=='none')sel.value=g;}
 function confirmEditPurchase(){
   const modal=q('#purchaseModalBackdrop .modal');
   const id=modal.getAttribute('data-id');
@@ -1334,12 +1401,12 @@ function confirmEditPurchase(){
   if(amount===0){toast('请填写金额');return;}
   item.name=name;
   item.weight=document.getElementById('editPurWeight').value.trim();
-  item.use=document.getElementById('editPurUse').value.trim();
-  item.cat=document.getElementById('editPurCat').value;
+  const cat=resolveNewCat('editPurCat','editPurCatOther');if(cat===null)return;
+  item.cat=cat;
   item.channel=document.getElementById('editPurChannel').value;
   item.amount=amount;
   item.date=document.getElementById('editPurDate').value||today();
-  closePurchaseModal();save();renderPurchase();renderMonthly();toast('已更新');
+  closePurchaseModal();save();fillCatSelect('purCat','食材');renderPurchase();renderMonthly();toast('已更新');
 }
 function delPurchase(id){const item=(S.purchase||[]).find(p=>p.id===id);
   if(!item)return;
@@ -1350,8 +1417,8 @@ function delPurchase(id){const item=(S.purchase||[]).find(p=>p.id===id);
 function exportPurchaseCSV(){
   const m=document.getElementById('purMonth').value||'';
   let list=(S.purchase||[]).filter(p=>!m||(p.date||'').startsWith(m));
-  let csv='日期,名称,重量/数量,用途,分类,下单途径,金额\n';
-  list.forEach(p=>{csv+=`${p.date},${p.name},${p.weight||''},${p.use||''},${p.cat},${p.channel||''},${p.amount}\n`;});
+  let csv='日期,名称,重量/数量,用途（分类）,下单途径,金额\n';
+  list.forEach(p=>{csv+=`${p.date},${p.name},${p.weight||''},${p.cat},${p.channel||''},${p.amount}\n`;});
   download((m||'全部')+'_进货清单.csv',csv);
 }
 
@@ -1437,7 +1504,7 @@ document.getElementById('monthPick').value=ym(new Date());
 document.getElementById('purMonth').value=ym(new Date());
 document.getElementById('monthTurnoverMonth').value=ym(new Date());
 document.getElementById('purDate').value=today();
-fillCatSelect();renderPurchase();renderDaily();renderSettings();renderMonthTurnover();
+fillCatSelect('purCat');renderPurchase();renderDaily();renderSettings();renderMonthTurnover();
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 </script>
 </body>
