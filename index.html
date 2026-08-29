@@ -169,7 +169,7 @@
   .initial-item-table td:last-child,.initial-item-table th:last-child{text-align:right;white-space:nowrap}
   .initial-item-table td:last-child .btn{margin:0 2px}
   .purchase-table{table-layout:fixed;width:100%;min-width:720px!important}
-  .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+  .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:5px 6px}
   .purchase-table td:nth-child(4),.purchase-table th:nth-child(4){text-align:left}
   .purchase-table td:last-child,.purchase-table th:last-child{white-space:nowrap}
   .purchase-table td:last-child .btn{margin:0 2px}
@@ -603,6 +603,7 @@ function save(){localStorage.setItem(KEY,JSON.stringify(S));toast('已保存')}
 function num(v){const n=parseFloat((''+v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n}
 function ym(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function ymd(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),da=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${da}`}
+function ymNorm(d){if(!d)return '';const s=(''+d).trim().replace(/\//g,'-');const p=s.split('-');if(p.length<2)return s.slice(0,7);const y=p[0];const mo=String(Number(p[1])).padStart(2,'0');return y+'-'+mo;}
 function today(){return ymd(new Date())}
 function daysAgoStr(n){const d=new Date();d.setDate(d.getDate()-n);return ymd(d)}
 function ageDays(s){const a=new Date(s+'T00:00:00'),b=new Date(today()+'T00:00:00');return Math.floor((b-a)/86400000)}
@@ -763,7 +764,7 @@ function saveBlock(key){
 }
 
 /* ---------- 月度 ---------- */
-function monthPurchaseDefault(m){return (S.purchase||[]).filter(p=>(p.date||'').startsWith(m)).reduce((s,p)=>s+num(p.amount),0);}
+function monthPurchaseDefault(m){return (S.purchase||[]).filter(p=>ymNorm(p.date)===m).reduce((s,p)=>s+num(p.amount),0);}
 function getMonthCosts(m){if(S.monthly[m]){S.monthly[m].extras=S.monthly[m].extras||[];S.monthly[m].marketing=num(S.monthly[m].marketing);return S.monthly[m];}
   return {rent:num(S.settings.rent),utility:num(S.settings.utility),wage:num(S.settings.wage),marketing:0,purchase:monthPurchaseDefault(m),extras:[]};}
 function renderMonthly(){
@@ -1397,7 +1398,7 @@ function autoCat(){fillCatSelect('purCat');
 function renderPurchase(){
   fillCatSelect('purCat');fillChannelSelect('purChannel');
   const m=document.getElementById('purMonth').value||'';
-  let list=(S.purchase||[]).filter(p=>!m||(p.date||'').startsWith(m));
+  let list=(S.purchase||[]).filter(p=>!m||ymNorm(p.date)===m);
   list.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const tb=q('#purTable tbody');tb.innerHTML='';
   let total=0;const catSum={};
@@ -1412,6 +1413,7 @@ function renderPurchase(){
   q('#purTable tfoot').innerHTML=
     `<tr class="tot"><td colspan="5">合计（${list.length} 项）</td><td style="text-align:right">${money(total)}</td><td></td></tr>`;
   document.getElementById('purMonthTotal').value=money(total);
+  {const pf=document.getElementById('purMonthTotal').closest('.field');if(pf&&pf.querySelector('label'))pf.querySelector('label').textContent=m?('当月进货合计（'+m+'）'):'全部进货合计';}
   let html='';getCats().forEach(c=>{if(catSum[c])html+=stat(c,money(catSum[c]));});
   document.getElementById('purCatSummary').innerHTML=html||stat('暂无数据','¥0.00');
 }
