@@ -786,7 +786,7 @@ function renderMonthly(){
    const hint=document.getElementById('mPurchaseHint');
    if(purM&&purM!==m){hint.textContent=`⚠️ 进货清单当前筛选「${purM}」合计 ¥${money(purTotal)}，与月度月份「${m}」不一致，请两边选同一月份`;hint.style.color='var(--red,#d33)';}
    else if(!purM){hint.textContent=`提示：进货清单当前显示「全部」合计 ¥${money(purTotal)}；本处只读「${m}」当月进货 ¥${money(mc.purchase)}，两边选同一月份才会相等`;hint.style.color='var(--muted,#888)';}
-   else{hint.textContent=`已对齐：进货清单「${m}」合计 = 本处 ¥${money(mc.purchase)}`;hint.style.color='var(--green,#1a7f37)';}}
+   else{hint.textContent='';}}
   renderMonthExtras(mc.extras);
   const fixed=mc.rent+mc.utility+mc.wage;
   const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
