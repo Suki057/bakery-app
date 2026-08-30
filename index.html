@@ -1424,7 +1424,7 @@ function renderPurchase(){
     `<tr class="tot"><td colspan="5">合计（${list.length} 项）</td><td style="text-align:right">${money(total)}</td><td></td></tr>`;
   document.getElementById('purMonthTotal').value=money(total);
   {const pf=document.getElementById('purMonthTotal').closest('.field');if(pf&&pf.querySelector('label'))pf.querySelector('label').textContent=m?('当月进货合计（'+m+'）'):'全部进货合计';}
-  let html='';getCats().forEach(c=>{if(catSum[c])html+=stat(c,money(catSum[c]));});
+  let html='';Object.keys(catSum).sort().forEach(c=>{html+=stat(c,money(catSum[c]));});
   document.getElementById('purCatSummary').innerHTML=html||stat('暂无数据','¥0.00');
 }
 function addPurchase(){
