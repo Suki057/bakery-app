@@ -168,12 +168,12 @@
   .initial-item-table th,.initial-item-table td{text-align:left;overflow:hidden;text-overflow:ellipsis}
   .initial-item-table td:last-child,.initial-item-table th:last-child{text-align:right;white-space:nowrap}
   .initial-item-table td:last-child .btn{margin:0 2px}
-  .purchase-table{table-layout:fixed;width:100%;min-width:600px!important}
-  .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:5px 6px}
-  .purchase-table td:nth-child(4),.purchase-table th:nth-child(4){text-align:left}
-  .purchase-table td:last-child,.purchase-table th:last-child{white-space:nowrap;position:sticky;right:0;background:#fff;z-index:2;border-left:1px solid rgba(123,123,140,0.18)}
-  .purchase-table td:last-child .btn{margin:0 2px}
-  .purchase-table tfoot td:last-child{text-align:right}
+  .purchase-table{table-layout:fixed;width:100%;min-width:560px!important}
+  .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:4px 5px}
+  .purchase-table td:nth-child(5),.purchase-table th:nth-child(5){text-align:left}
+  .purchase-table td:nth-child(1){white-space:nowrap}
+  .purchase-table td:nth-child(1) .btn{margin:0 2px}
+  .purchase-table tfoot td:nth-child(7){text-align:right}
   .select-row{display:flex;gap:8px;align-items:center}
   .select-row select{flex:1;min-width:0}
   .opt-mgr-list{max-height:46vh;overflow:auto;margin:4px 0 2px}
@@ -429,7 +429,7 @@
     <div class="card">
       <h2>📋 进货明细</h2>
       <table id="purTable" class="purchase-table">
-        <thead><tr><th style="width:13%">日期</th><th style="width:17%">名称</th><th style="width:12%">重量/数量</th><th style="width:18%">用途（分类）</th><th style="width:12%">途径</th><th style="width:13%">成本总价</th><th style="width:15%">操作</th></tr></thead>
+        <thead><tr><th style="width:15%">操作</th><th style="width:12%">日期</th><th style="width:16%">名称</th><th style="width:11%">重量/数量</th><th style="width:17%">用途（分类）</th><th style="width:11%">途径</th><th style="width:18%">成本总价</th></tr></thead>
         <tbody></tbody><tfoot></tfoot>
       </table>
     </div>
@@ -1414,14 +1414,14 @@ function renderPurchase(){
   let total=0;const catSum={};
   list.forEach(p=>{total+=num(p.amount);catSum[p.cat=p.cat||'其他']=(catSum[p.cat]||0)+num(p.amount);
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${p.date||''}</td><td>${esc(p.name)}</td><td>${esc(p.weight||'')}</td>
+    tr.innerHTML=`<td><button type="button" class="btn ghost xs" onclick="editPurchase('${p.id}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delPurchase('${p.id}')" style="color:var(--red)">删除</button></td>
+      <td>${p.date||''}</td><td>${esc(p.name)}</td><td>${esc(p.weight||'')}</td>
       <td><span class="pill n">${p.cat}</span></td>
       <td>${esc(p.channel||'')}</td>
-      <td style="text-align:right">${money(num(p.amount))}</td>
-      <td><button type="button" class="btn ghost xs" onclick="editPurchase('${p.id}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delPurchase('${p.id}')" style="color:var(--red)">删除</button></td>`;
+      <td style="text-align:right">${money(num(p.amount))}</td>`;
     tb.appendChild(tr);});
   q('#purTable tfoot').innerHTML=
-    `<tr class="tot"><td colspan="5">合计（${list.length} 项）</td><td style="text-align:right">${money(total)}</td><td></td></tr>`;
+    `<tr class="tot"><td colspan="6">合计（${list.length} 项）</td><td style="text-align:right">${money(total)}</td></tr>`;
   document.getElementById('purMonthTotal').value=money(total);
   {const pf=document.getElementById('purMonthTotal').closest('.field');if(pf&&pf.querySelector('label'))pf.querySelector('label').textContent=m?('当月进货合计（'+m+'）'):'全部进货合计';}
   let html='';Object.keys(catSum).sort().forEach(c=>{html+=stat(c,money(catSum[c]));});
