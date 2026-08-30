@@ -305,7 +305,8 @@
         <div class="field currency-field"><label>外卖平台营销</label><span class="currency">¥</span><input type="number" id="mMarketing" oninput="onMonthCostEdit()"></div>
       </div>
       <div class="row grid2" style="margin-top:12px">
-        <div class="field currency-field"><label>进货成本（自动读取当月进货合计）</label><span class="currency">¥</span><input type="number" id="mPurchase" readonly tabindex="-1" style="background:var(--disabled-bg,#f3f4f6);color:var(--muted);cursor:not-allowed"></div>
+        <div class="field currency-field"><label id="mPurchaseLabel">进货成本（自动读取进货清单当月合计）</label><span class="currency">¥</span><input type="number" id="mPurchase" readonly tabindex="-1" style="background:var(--disabled-bg,#f3f4f6);color:var(--muted);cursor:not-allowed"></div>
+        <div id="mPurchaseHint" class="hint" style="margin-top:2px"></div>
       </div>
       <div id="monthExtras" style="margin-top:12px"></div>
       <div class="row grid2" style="margin-top:12px">
@@ -779,6 +780,13 @@ function renderMonthly(){
   document.getElementById('mWage').value=mc.wage;
   document.getElementById('mMarketing').value=mc.marketing;
   document.getElementById('mPurchase').value=mc.purchase;
+  {const purM=document.getElementById('purMonth').value||'';
+   const purTotal=(S.purchase||[]).filter(p=>!purM||ymNorm(p.date)===purM).reduce((s,p)=>s+num(p.amount),0);
+   document.getElementById('mPurchaseLabel').textContent=`进货成本（自动读取进货清单 ${m} 合计）`;
+   const hint=document.getElementById('mPurchaseHint');
+   if(purM&&purM!==m){hint.textContent=`⚠️ 进货清单当前筛选「${purM}」合计 ¥${money(purTotal)}，与月度月份「${m}」不一致，请两边选同一月份`;hint.style.color='var(--red,#d33)';}
+   else if(!purM){hint.textContent=`提示：进货清单当前显示「全部」合计 ¥${money(purTotal)}；本处只读「${m}」当月进货 ¥${money(mc.purchase)}，两边选同一月份才会相等`;hint.style.color='var(--muted,#888)';}
+   else{hint.textContent=`已对齐：进货清单「${m}」合计 = 本处 ¥${money(mc.purchase)}`;hint.style.color='var(--green,#1a7f37)';}}
   renderMonthExtras(mc.extras);
   const fixed=mc.rent+mc.utility+mc.wage;
   const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
