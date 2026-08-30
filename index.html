@@ -168,11 +168,11 @@
   .initial-item-table th,.initial-item-table td{text-align:left;overflow:hidden;text-overflow:ellipsis}
   .initial-item-table td:last-child,.initial-item-table th:last-child{text-align:right;white-space:nowrap}
   .initial-item-table td:last-child .btn{margin:0 2px}
-  .purchase-table{table-layout:fixed;width:100%;min-width:560px!important}
+  .purchase-table{table-layout:fixed;width:100%;min-width:640px!important;border-collapse:collapse}
   .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:4px 5px}
-  .purchase-table td:nth-child(5),.purchase-table th:nth-child(5){text-align:left}
-  .purchase-table td:nth-child(1){white-space:nowrap}
-  .purchase-table td:nth-child(1) .btn{margin:0 2px}
+  .purchase-table th:nth-child(1),.purchase-table td:nth-child(1){text-align:left;white-space:normal;overflow:visible;line-height:1.4}
+  .purchase-table td:nth-child(1) .btn{margin:1px 2px}
+  .purchase-table td:nth-child(7),.purchase-table th:nth-child(7){text-align:right}
   .purchase-table tfoot td:nth-child(7){text-align:right}
   .select-row{display:flex;gap:8px;align-items:center}
   .select-row select{flex:1;min-width:0}
@@ -193,11 +193,17 @@
     .daily-block-table td input[data-f="r"],.daily-block-table td input[data-f="n"]{width:62px}
     .daily-block-table td input[data-f="m"]{width:46px}
   }
-  .month-detail-table{table-layout:fixed;width:100%;min-width:860px!important}
-  .month-detail-table th,.month-detail-table td{text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .month-detail-table th:first-child,.month-detail-table td:first-child{text-align:left}
-  .month-detail-table th:nth-child(5),.month-detail-table td:nth-child(5){text-align:right}
-  .month-detail-table th:nth-child(9),.month-detail-table td:nth-child(9){text-align:center}
+  .month-detail-table{table-layout:fixed;width:100%;min-width:960px!important;border-collapse:collapse}
+  .month-detail-table th,.month-detail-table td{text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 6px}
+  .month-detail-table th:first-child,.month-detail-table td:first-child{text-align:left;white-space:normal;overflow:visible;line-height:1.4}
+  .month-detail-table td:first-child .btn{margin:1px 2px}
+  .month-detail-table th:nth-child(6),.month-detail-table td:nth-child(6){text-align:right}
+  .month-detail-table th:nth-child(10),.month-detail-table td:nth-child(10){text-align:center}
+  .daily-detail-table{table-layout:fixed;width:100%;min-width:760px!important;border-collapse:collapse}
+  .daily-detail-table th,.daily-detail-table td{text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 6px}
+  .daily-detail-table th:first-child,.daily-detail-table td:first-child{text-align:left;white-space:normal;overflow:visible;line-height:1.4}
+  .daily-detail-table td:first-child .btn{margin:1px 2px}
+  .daily-detail-table td:nth-child(2),.daily-detail-table th:nth-child(2){text-align:center}
   .hint::before{content:'';position:absolute;inset:0;border-radius:16px;background:var(--band);pointer-events:none;z-index:0}
   .toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
     background:rgba(47,47,58,0.82);color:#fff;padding:12px 22px;border-radius:16px;font-size:10px;
@@ -274,10 +280,10 @@
       <div class="summary" id="monthTurnoverSummary"></div>
     </div>
     <div class="card">
-      <h2>📋 数据明细 <span class="tag">按日期聚合</span></h2>
+      <h2>📋 数据明细 <span class="tag">按日期聚合</span> <span class="tag" id="dailyDetailYearTag"></span></h2>
       <div class="table-wrap">
-        <table id="dailyDetailTable">
-          <thead><tr><th>日期</th><th>堂食</th><th>画室</th><th>美团</th><th>闪购</th><th>京东</th><th>当日合计</th></tr></thead>
+        <table id="dailyDetailTable" class="daily-detail-table">
+          <thead><tr><th style="width:15%">操作</th><th style="width:10%">日期</th><th style="width:15%">堂食</th><th style="width:15%">画室</th><th style="width:15%">美团</th><th style="width:15%">闪购</th><th style="width:15%">京东</th></tr></thead>
           <tbody></tbody>
           <tfoot></tfoot>
         </table>
@@ -322,10 +328,10 @@
       <h2>📊 月度统计 <span class="tag" id="monthLabel"></span></h2>
       <div class="summary" id="monthSummary"></div>
       <div class="hint">毛利润=实际营业额-进货成本；毛利率=毛利润/实际营业额；净利润=实际营业额-进货成本-固定成本合计-其他杂费。</div>
-      <h2 style="margin-top:18px">📋 月度明细</h2>
+      <h2 style="margin-top:18px">📋 月度明细 <span class="tag" id="monthDetailYearTag"></span></h2>
       <div class="table-wrap">
         <table id="monthDetailTable" class="month-detail-table">
-          <thead><tr><th>月份</th><th>实际营业额</th><th>进货成本</th><th>毛利润</th><th>毛利率</th><th>固定成本</th><th>其他杂费</th><th>净利润</th><th>记账天数</th></tr></thead>
+          <thead><tr><th style="width:15%">操作</th><th style="width:9%">月份</th><th style="width:11%">实际营业额</th><th style="width:11%">进货成本</th><th style="width:10%">毛利润</th><th style="width:9%">毛利率</th><th style="width:10%">固定成本</th><th style="width:10%">其他杂费</th><th style="width:10%">净利润</th><th style="width:10%">记账天数</th></tr></thead>
           <tbody></tbody>
           <tfoot></tfoot>
         </table>
@@ -427,9 +433,9 @@
       </div>
     </div>
     <div class="card">
-      <h2>📋 进货明细</h2>
+      <h2>📋 进货明细 <span class="tag" id="purYearTag"></span></h2>
       <table id="purTable" class="purchase-table">
-        <thead><tr><th style="width:15%">操作</th><th style="width:12%">日期</th><th style="width:16%">名称</th><th style="width:11%">重量/数量</th><th style="width:17%">用途（分类）</th><th style="width:11%">途径</th><th style="width:18%">成本总价</th></tr></thead>
+        <thead><tr><th style="width:17%">操作</th><th style="width:11%">日期</th><th style="width:18%">名称</th><th style="width:13%">重量/数量</th><th style="width:15%">用途（分类）</th><th style="width:12%">途径</th><th style="width:14%">成本总价</th></tr></thead>
         <tbody></tbody><tfoot></tfoot>
       </table>
     </div>
@@ -605,6 +611,9 @@ function num(v){const n=parseFloat((''+v).replace(/[^\d.\-]/g,''));return isNaN(
 function ym(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function ymd(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),da=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${da}`}
 function ymNorm(d){if(!d)return '';const s=(''+d).trim().replace(/\//g,'-');const p=s.split('-');if(p.length<2)return s.slice(0,7);const y=p[0];const mo=String(Number(p[1])).padStart(2,'0');return y+'-'+mo;}
+function fmtMD(d){if(!d)return '';const p=(''+d).split('-');if(p.length<3)return d;return `${p[1]}-${p[2]}`;}
+function fmtMonth(m){if(!m)return '';const p=(''+m).split('-');return p[1]||m;}
+function dataYear(){const yrs=[];(S.records||[]).forEach(r=>{if(r.date)yrs.push(r.date.slice(0,4));});(S.purchase||[]).forEach(p=>{if(p.date)yrs.push(p.date.slice(0,4));});Object.keys(S.monthly||{}).forEach(k=>yrs.push(k.slice(0,4)));return yrs.filter(Boolean).length?Math.max(...yrs):new Date().getFullYear();}
 function today(){return ymd(new Date())}
 function daysAgoStr(n){const d=new Date();d.setDate(d.getDate()-n);return ymd(d)}
 function ageDays(s){const a=new Date(s+'T00:00:00'),b=new Date(today()+'T00:00:00');return Math.floor((b-a)/86400000)}
@@ -722,12 +731,13 @@ function renderDailyDetail(){
     dayMap[r.date][r.ch]={r:num(r.r),n:num(r.n),profit:num(r.profit)};
   });
   const dates=Object.keys(dayMap).sort((a,b)=>b.localeCompare(a));
+  document.getElementById('dailyDetailYearTag').textContent=dataYear()+'年';
   if(!dates.length){tb.innerHTML='<tr><td colspan="7" class="muted">暂无已保存的明细</td></tr>';tf.innerHTML='';return;}
   let total={dailyTurnover:0,actualTurnover:0,actualProfit:0};
   tb.innerHTML='';
   dates.forEach(d=>{
     const m=dayMap[d];
-    let rowHtml=`<td>${d}</td>`;
+    let rowHtml=`<td><button type="button" class="btn ghost xs" onclick="editDay('${d}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delDay('${d}')" style="color:var(--red)">删除</button></td><td>${fmtMD(d)}</td>`;
     let dayDaily=0,dayActual=0,dayProfit=0;
     CH_ALL.forEach(c=>{
       const block=blockOf(c.k);const v=m[c.k]||{r:0,n:0,profit:0};
@@ -740,11 +750,19 @@ function renderDailyDetail(){
         dayProfit+=num(v.profit);
       }
     });
-    rowHtml+=`<td><strong>${money(dayProfit)}</strong><span class="small">营业额 ${money(dayDaily)} / 实际 ${money(dayActual)}</span></td>`;
     tb.innerHTML+=`<tr>${rowHtml}</tr>`;
     total.dailyTurnover+=dayDaily;total.actualTurnover+=dayActual;total.actualProfit+=dayProfit;
   });
-  tf.innerHTML=`<tr class="tot"><td>合计</td><td colspan="5"></td><td><strong>${money(total.actualProfit)}</strong><span class="small">营业额 ${money(total.dailyTurnover)} / 实际 ${money(total.actualTurnover)}</span></td></tr>`;
+  tf.innerHTML=`<tr class="tot"><td></td><td>合计</td><td colspan="5" style="text-align:right"><strong>${money(total.actualProfit)}</strong><span class="small">营业额 ${money(total.dailyTurnover)} / 实际 ${money(total.actualTurnover)}</span></td></tr>`;
+}
+function editDay(d){document.getElementById('dailyDate').value=d;showTab('daily');renderDaily();}
+function delDay(d){
+  showConfirm('删除「'+d+'」当日所有记账明细？删除后可到回收站恢复。',()=>{
+    const list=(S.records||[]).filter(r=>r.date===d);
+    list.forEach(r=>addToTrash('record',r,'记账 '+r.date+' '+r.name));
+    S.records=(S.records||[]).filter(r=>r.date!==d);
+    save();renderDaily();renderMonthly();renderMonthlyDetail();renderFunds();renderTrash();toast('已移入回收站');
+  });
 }
 function saveBlock(key){
   const block=BLOCKS[key];const date=document.getElementById('dailyDate').value;
@@ -855,7 +873,8 @@ function renderMonthlyDetail(){
   (S.purchase||[]).forEach(p=>{if(p.date)set.add(p.date.slice(0,7));});
   Object.keys(S.monthly||{}).forEach(k=>set.add(k));
   const months=Array.from(set).sort((a,b)=>b.localeCompare(a));
-  if(!months.length){tb.innerHTML='<tr><td colspan="9" class="muted" style="text-align:center;padding:10px">暂无月度数据</td></tr>';tf.innerHTML='';return;}
+  document.getElementById('monthDetailYearTag').textContent=dataYear()+'年';
+  if(!months.length){tb.innerHTML='<tr><td colspan="10" class="muted" style="text-align:center;padding:10px">暂无月度数据</td></tr>';tf.innerHTML='';return;}
   let total={actualTurnover:0,purchase:0,gross:0,fixed:0,extrasTotal:0,net:0,days:0};
   tb.innerHTML='';
   months.forEach(m=>{
@@ -863,7 +882,8 @@ function renderMonthlyDetail(){
     total.actualTurnover+=s.actualTurnover;total.purchase+=s.purchase;total.gross+=s.gross;
     total.fixed+=s.fixed;total.extrasTotal+=s.extrasTotal;total.net+=s.net;total.days+=s.days;
     tb.innerHTML+=`<tr>
-      <td>${m}</td>
+      <td><button type="button" class="btn ghost xs" onclick="editMonth('${m}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delMonth('${m}')" style="color:var(--red)">删除</button></td>
+      <td>${fmtMonth(m)}</td>
       <td>${money(s.actualTurnover)}</td>
       <td>${money(s.purchase)}</td>
       <td class="${s.gross<0?'neg':'pos'}">${money(s.gross)}</td>
@@ -876,6 +896,7 @@ function renderMonthlyDetail(){
   });
   const totalGrossRate=total.actualTurnover>0?(total.gross/total.actualTurnover)*100:0;
   tf.innerHTML=`<tr class="tot">
+    <td></td>
     <td>合计</td>
     <td>${money(total.actualTurnover)}</td>
     <td>${money(total.purchase)}</td>
@@ -886,6 +907,19 @@ function renderMonthlyDetail(){
     <td class="${total.net<0?'neg':'pos'}">${money(total.net)}</td>
     <td>${total.days} 天</td>
   </tr>`;
+}
+function editMonth(m){document.getElementById('monthPick').value=m;showTab('monthly');renderMonthly();}
+function delMonth(m){
+  showConfirm('删除「'+m+'」整月数据？该月所有记账、进货记录将被移入回收站。',()=>{
+    const records=(S.records||[]).filter(r=>r.date&&r.date.startsWith(m));
+    const purchases=(S.purchase||[]).filter(p=>p.date&&p.date.startsWith(m));
+    records.forEach(r=>addToTrash('record',r,'记账 '+r.date+' '+r.name));
+    purchases.forEach(p=>addToTrash('purchase',p,'进货 '+p.date+' '+p.name));
+    if(S.monthly&&S.monthly[m]){addToTrash('monthly',Object.assign({},S.monthly[m],{_month:m}),'月度成本 '+m);delete S.monthly[m];}
+    S.records=(S.records||[]).filter(r=>!(r.date&&r.date.startsWith(m)));
+    S.purchase=(S.purchase||[]).filter(p=>!(p.date&&p.date.startsWith(m)));
+    save();renderDaily();renderMonthly();renderMonthlyDetail();renderPurchase();renderFunds();renderTrash();toast('已移入回收站');
+  });
 }
 function renderMonthExtras(extras){
   const container=document.getElementById('monthExtras');
@@ -1412,10 +1446,12 @@ function renderPurchase(){
   list.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const tb=q('#purTable tbody');tb.innerHTML='';
   let total=0;const catSum={};
+  const maxYear=(S.purchase||[]).length?Math.max(...(S.purchase||[]).map(p=>(p.date||'').slice(0,4)).filter(Boolean)):new Date().getFullYear();
+  const tag=document.getElementById('purYearTag');if(tag)tag.textContent=maxYear?maxYear+'年':'';
   list.forEach(p=>{total+=num(p.amount);catSum[p.cat=p.cat||'其他']=(catSum[p.cat]||0)+num(p.amount);
     const tr=document.createElement('tr');
     tr.innerHTML=`<td><button type="button" class="btn ghost xs" onclick="editPurchase('${p.id}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delPurchase('${p.id}')" style="color:var(--red)">删除</button></td>
-      <td>${p.date||''}</td><td>${esc(p.name)}</td><td>${esc(p.weight||'')}</td>
+      <td>${fmtMD(p.date)}</td><td>${esc(p.name)}</td><td>${esc(p.weight||'')}</td>
       <td><span class="pill n">${p.cat}</span></td>
       <td>${esc(p.channel||'')}</td>
       <td style="text-align:right">${money(num(p.amount))}</td>`;
@@ -1530,7 +1566,7 @@ function exportPurchaseCSV(){
 /* ---------- 回收站 ---------- */
 function addToTrash(type,data,label){S.trash=S.trash||[];S.trash.push({id:'t'+Date.now(),type,data,label,deletedAt:today()});}
 function purgeTrash(){if(!S.trash)return;const cut=daysAgoStr(TRASH_DAYS);S.trash=S.trash.filter(t=>t.deletedAt>=cut);}
-function trashType(t){return {record:'记账明细',purchase:'进货',ledger:'资金变动',fund:'资金',fundItem:'资金明细',extra:'成本项',initialItem:'初始投入'}[t]||t;}
+function trashType(t){return {record:'记账明细',purchase:'进货',ledger:'资金变动',fund:'资金',fundItem:'资金明细',extra:'成本项',initialItem:'初始投入',monthly:'月度成本'}[t]||t;}
 function renderTrash(){purgeTrash();const tb=q('#trashTable tbody');tb.innerHTML='';
   if(!S.trash||!S.trash.length){tb.innerHTML='<tr><td colspan="5" class="muted">回收站为空</td></tr>';return;}
   S.trash.slice().reverse().forEach(t=>{const left=TRASH_DAYS-ageDays(t.deletedAt);
@@ -1552,6 +1588,7 @@ function restoreTrash(id){const i=(S.trash||[]).findIndex(t=>t.id===id);if(i<0)r
   }
   else if(t.type==='fundItem'){S.funds[t.data.type+'Items']=S.funds[t.data.type+'Items']||[];S.funds[t.data.type+'Items'].push(t.data.item);}
   else if(t.type==='extra'){S.monthly[t.data.month]=S.monthly[t.data.month]||{extras:[]};S.monthly[t.data.month].extras.push({name:t.data.name,amount:t.data.amount});}
+  else if(t.type==='monthly'){const m=t.data.month||t.data._month||'';if(m){S.monthly[m]=S.monthly[m]||{};Object.assign(S.monthly[m],t.data);delete S.monthly[m]._month;}}
   else if(t.type==='initialItem'){S.initial=getInitial();S.initial[t.data.key]=S.initial[t.data.key]||[];S.initial[t.data.key].push(t.data.item);}
   S.trash.splice(i,1);save();renderTrash();renderMonthly();renderFunds();renderInitial();toast('已恢复');}
 function permDelete(id){S.trash=S.trash.filter(t=>t.id!==id);save();renderTrash();toast('已永久删除');}
