@@ -168,10 +168,10 @@
   .initial-item-table th,.initial-item-table td{text-align:left;overflow:hidden;text-overflow:ellipsis}
   .initial-item-table td:last-child,.initial-item-table th:last-child{text-align:right;white-space:nowrap}
   .initial-item-table td:last-child .btn{margin:0 2px}
-  .purchase-table{table-layout:fixed;width:100%;min-width:720px!important}
+  .purchase-table{table-layout:fixed;width:100%;min-width:600px!important}
   .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:5px 6px}
   .purchase-table td:nth-child(4),.purchase-table th:nth-child(4){text-align:left}
-  .purchase-table td:last-child,.purchase-table th:last-child{white-space:nowrap}
+  .purchase-table td:last-child,.purchase-table th:last-child{white-space:nowrap;position:sticky;right:0;background:#fff;z-index:2;border-left:1px solid rgba(123,123,140,0.18)}
   .purchase-table td:last-child .btn{margin:0 2px}
   .purchase-table tfoot td:last-child{text-align:right}
   .select-row{display:flex;gap:8px;align-items:center}
@@ -429,7 +429,7 @@
     <div class="card">
       <h2>📋 进货明细</h2>
       <table id="purTable" class="purchase-table">
-        <thead><tr><th style="width:12%">日期</th><th style="width:18%">名称</th><th style="width:12%">重量/数量</th><th style="width:20%">用途（分类）</th><th style="width:11%">途径</th><th style="width:13%">成本总价</th><th style="width:14%">操作</th></tr></thead>
+        <thead><tr><th style="width:13%">日期</th><th style="width:17%">名称</th><th style="width:12%">重量/数量</th><th style="width:18%">用途（分类）</th><th style="width:12%">途径</th><th style="width:13%">成本总价</th><th style="width:15%">操作</th></tr></thead>
         <tbody></tbody><tfoot></tfoot>
       </table>
     </div>
@@ -1418,7 +1418,7 @@ function renderPurchase(){
       <td><span class="pill n">${p.cat}</span></td>
       <td>${esc(p.channel||'')}</td>
       <td style="text-align:right">${money(num(p.amount))}</td>
-      <td><button class="btn ghost xs" onclick="editPurchase('${p.id}')">编辑</button><button class="btn ghost xs op-del" onclick="delPurchase('${p.id}')" style="color:var(--red)">…</button></td>`;
+      <td><button type="button" class="btn ghost xs" onclick="editPurchase('${p.id}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delPurchase('${p.id}')" style="color:var(--red)">删除</button></td>`;
     tb.appendChild(tr);});
   q('#purTable tfoot').innerHTML=
     `<tr class="tot"><td colspan="5">合计（${list.length} 项）</td><td style="text-align:right">${money(total)}</td><td></td></tr>`;
