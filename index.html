@@ -771,6 +771,8 @@ function renderMonthly(){
   const m=document.getElementById('monthPick').value||ym(new Date());
   document.getElementById('monthPick').value=m;
   document.getElementById('monthLabel').textContent=m;
+  S.monthly[m]=S.monthly[m]||{extras:[]};
+  S.monthly[m].purchase=monthPurchaseDefault(m);
   const mc=getMonthCosts(m);
   document.getElementById('mRent').value=mc.rent;
   document.getElementById('mUtility').value=mc.utility;
