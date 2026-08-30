@@ -170,10 +170,10 @@
   .initial-item-table td:last-child .btn{margin:0 2px}
   .purchase-table{table-layout:fixed;width:100%;min-width:640px!important;border-collapse:collapse}
   .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:4px 5px}
-  .purchase-table th:nth-child(1),.purchase-table td:nth-child(1){text-align:left;white-space:normal;overflow:visible;line-height:1.4}
-  .purchase-table td:nth-child(1) .btn{margin:1px 2px}
-  .purchase-table td:nth-child(7),.purchase-table th:nth-child(7){text-align:right}
-  .purchase-table tfoot td:nth-child(7){text-align:right}
+  .purchase-table td:last-child,.purchase-table th:last-child{text-align:center;white-space:normal;overflow:visible;line-height:1.4}
+  .purchase-table td:last-child .btn{margin:1px 2px}
+  .purchase-table td:nth-child(6),.purchase-table th:nth-child(6){text-align:right}
+  .purchase-table tfoot td:nth-child(6){text-align:right}
   .select-row{display:flex;gap:8px;align-items:center}
   .select-row select{flex:1;min-width:0}
   .opt-mgr-list{max-height:46vh;overflow:auto;margin:4px 0 2px}
@@ -195,15 +195,14 @@
   }
   .month-detail-table{table-layout:fixed;width:100%;min-width:960px!important;border-collapse:collapse}
   .month-detail-table th,.month-detail-table td{text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 6px}
-  .month-detail-table th:first-child,.month-detail-table td:first-child{text-align:left;white-space:normal;overflow:visible;line-height:1.4}
-  .month-detail-table td:first-child .btn{margin:1px 2px}
-  .month-detail-table th:nth-child(6),.month-detail-table td:nth-child(6){text-align:right}
-  .month-detail-table th:nth-child(10),.month-detail-table td:nth-child(10){text-align:center}
+  .month-detail-table td:last-child,.month-detail-table th:last-child{text-align:center;white-space:normal;overflow:visible;line-height:1.4}
+  .month-detail-table td:last-child .btn{margin:1px 2px}
+  .month-detail-table th:nth-child(9),.month-detail-table td:nth-child(9){text-align:center}
   .daily-detail-table{table-layout:fixed;width:100%;min-width:760px!important;border-collapse:collapse}
   .daily-detail-table th,.daily-detail-table td{text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 6px}
-  .daily-detail-table th:first-child,.daily-detail-table td:first-child{text-align:left;white-space:normal;overflow:visible;line-height:1.4}
-  .daily-detail-table td:first-child .btn{margin:1px 2px}
-  .daily-detail-table td:nth-child(2),.daily-detail-table th:nth-child(2){text-align:center}
+  .daily-detail-table td:last-child,.daily-detail-table th:last-child{text-align:center;white-space:normal;overflow:visible;line-height:1.4}
+  .daily-detail-table td:last-child .btn{margin:1px 2px}
+  .daily-detail-table td:first-child,.daily-detail-table th:first-child{text-align:left}
   .hint::before{content:'';position:absolute;inset:0;border-radius:16px;background:var(--band);pointer-events:none;z-index:0}
   .toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
     background:rgba(47,47,58,0.82);color:#fff;padding:12px 22px;border-radius:16px;font-size:10px;
@@ -283,7 +282,7 @@
       <h2>📋 数据明细 <span class="tag">按日期聚合</span> <span class="tag" id="dailyDetailYearTag"></span></h2>
       <div class="table-wrap">
         <table id="dailyDetailTable" class="daily-detail-table">
-          <thead><tr><th style="width:15%">操作</th><th style="width:10%">日期</th><th style="width:15%">堂食</th><th style="width:15%">画室</th><th style="width:15%">美团</th><th style="width:15%">闪购</th><th style="width:15%">京东</th></tr></thead>
+          <thead><tr><th style="width:10%">日期</th><th style="width:12%">堂食</th><th style="width:12%">画室</th><th style="width:12%">美团</th><th style="width:12%">闪购</th><th style="width:12%">京东</th><th style="width:15%">合计</th><th style="width:15%">操作</th></tr></thead>
           <tbody></tbody>
           <tfoot></tfoot>
         </table>
@@ -331,7 +330,7 @@
       <h2 style="margin-top:18px">📋 月度明细 <span class="tag" id="monthDetailYearTag"></span></h2>
       <div class="table-wrap">
         <table id="monthDetailTable" class="month-detail-table">
-          <thead><tr><th style="width:15%">操作</th><th style="width:9%">月份</th><th style="width:11%">实际营业额</th><th style="width:11%">进货成本</th><th style="width:10%">毛利润</th><th style="width:9%">毛利率</th><th style="width:10%">固定成本</th><th style="width:10%">其他杂费</th><th style="width:10%">净利润</th><th style="width:10%">记账天数</th></tr></thead>
+          <thead><tr><th style="width:10%">月份</th><th style="width:11%">实际营业额</th><th style="width:11%">进货成本</th><th style="width:10%">毛利润</th><th style="width:9%">毛利率</th><th style="width:10%">固定成本</th><th style="width:10%">其他杂费</th><th style="width:10%">净利润</th><th style="width:10%">记账天数</th><th style="width:9%">操作</th></tr></thead>
           <tbody></tbody>
           <tfoot></tfoot>
         </table>
@@ -435,7 +434,7 @@
     <div class="card">
       <h2>📋 进货明细 <span class="tag" id="purYearTag"></span></h2>
       <table id="purTable" class="purchase-table">
-        <thead><tr><th style="width:17%">操作</th><th style="width:11%">日期</th><th style="width:18%">名称</th><th style="width:13%">重量/数量</th><th style="width:15%">用途（分类）</th><th style="width:12%">途径</th><th style="width:14%">成本总价</th></tr></thead>
+        <thead><tr><th style="width:11%">日期</th><th style="width:18%">名称</th><th style="width:13%">重量/数量</th><th style="width:15%">用途（分类）</th><th style="width:12%">途径</th><th style="width:14%">成本总价</th><th style="width:17%">操作</th></tr></thead>
         <tbody></tbody><tfoot></tfoot>
       </table>
     </div>
@@ -732,12 +731,12 @@ function renderDailyDetail(){
   });
   const dates=Object.keys(dayMap).sort((a,b)=>b.localeCompare(a));
   document.getElementById('dailyDetailYearTag').textContent=dataYear()+'年';
-  if(!dates.length){tb.innerHTML='<tr><td colspan="7" class="muted">暂无已保存的明细</td></tr>';tf.innerHTML='';return;}
+  if(!dates.length){tb.innerHTML='<tr><td colspan="8" class="muted">暂无已保存的明细</td></tr>';tf.innerHTML='';return;}
   let total={dailyTurnover:0,actualTurnover:0,actualProfit:0};
   tb.innerHTML='';
   dates.forEach(d=>{
     const m=dayMap[d];
-    let rowHtml=`<td><button type="button" class="btn ghost xs" onclick="editDay('${d}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delDay('${d}')" style="color:var(--red)">删除</button></td><td>${fmtMD(d)}</td>`;
+    let rowHtml=`<td>${fmtMD(d)}</td>`;
     let dayDaily=0,dayActual=0,dayProfit=0;
     CH_ALL.forEach(c=>{
       const block=blockOf(c.k);const v=m[c.k]||{r:0,n:0,profit:0};
@@ -750,10 +749,11 @@ function renderDailyDetail(){
         dayProfit+=num(v.profit);
       }
     });
+    rowHtml+=`<td><strong>${money(dayProfit)}</strong><span class="small">营业额 ${money(dayDaily)} / 实际 ${money(dayActual)}</span></td><td><button type="button" class="btn ghost xs" onclick="editDay('${d}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delDay('${d}')" style="color:var(--red)">删除</button></td>`;
     tb.innerHTML+=`<tr>${rowHtml}</tr>`;
     total.dailyTurnover+=dayDaily;total.actualTurnover+=dayActual;total.actualProfit+=dayProfit;
   });
-  tf.innerHTML=`<tr class="tot"><td></td><td>合计</td><td colspan="5" style="text-align:right"><strong>${money(total.actualProfit)}</strong><span class="small">营业额 ${money(total.dailyTurnover)} / 实际 ${money(total.actualTurnover)}</span></td></tr>`;
+  tf.innerHTML=`<tr class="tot"><td>合计</td><td colspan="5"></td><td style="text-align:right"><strong>${money(total.actualProfit)}</strong><span class="small">营业额 ${money(total.dailyTurnover)} / 实际 ${money(total.actualTurnover)}</span></td><td></td></tr>`;
 }
 function editDay(d){document.getElementById('dailyDate').value=d;showTab('daily');renderDaily();}
 function delDay(d){
@@ -882,7 +882,6 @@ function renderMonthlyDetail(){
     total.actualTurnover+=s.actualTurnover;total.purchase+=s.purchase;total.gross+=s.gross;
     total.fixed+=s.fixed;total.extrasTotal+=s.extrasTotal;total.net+=s.net;total.days+=s.days;
     tb.innerHTML+=`<tr>
-      <td><button type="button" class="btn ghost xs" onclick="editMonth('${m}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delMonth('${m}')" style="color:var(--red)">删除</button></td>
       <td>${fmtMonth(m)}</td>
       <td>${money(s.actualTurnover)}</td>
       <td>${money(s.purchase)}</td>
@@ -892,11 +891,11 @@ function renderMonthlyDetail(){
       <td>${money(s.extrasTotal)}</td>
       <td class="${s.net<0?'neg':'pos'}">${money(s.net)}</td>
       <td>${s.days} 天</td>
+      <td><button type="button" class="btn ghost xs" onclick="editMonth('${m}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delMonth('${m}')" style="color:var(--red)">删除</button></td>
     </tr>`;
   });
   const totalGrossRate=total.actualTurnover>0?(total.gross/total.actualTurnover)*100:0;
   tf.innerHTML=`<tr class="tot">
-    <td></td>
     <td>合计</td>
     <td>${money(total.actualTurnover)}</td>
     <td>${money(total.purchase)}</td>
@@ -906,6 +905,7 @@ function renderMonthlyDetail(){
     <td>${money(total.extrasTotal)}</td>
     <td class="${total.net<0?'neg':'pos'}">${money(total.net)}</td>
     <td>${total.days} 天</td>
+    <td></td>
   </tr>`;
 }
 function editMonth(m){document.getElementById('monthPick').value=m;showTab('monthly');renderMonthly();}
@@ -1450,14 +1450,14 @@ function renderPurchase(){
   const tag=document.getElementById('purYearTag');if(tag)tag.textContent=maxYear?maxYear+'年':'';
   list.forEach(p=>{total+=num(p.amount);catSum[p.cat=p.cat||'其他']=(catSum[p.cat]||0)+num(p.amount);
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><button type="button" class="btn ghost xs" onclick="editPurchase('${p.id}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delPurchase('${p.id}')" style="color:var(--red)">删除</button></td>
-      <td>${fmtMD(p.date)}</td><td>${esc(p.name)}</td><td>${esc(p.weight||'')}</td>
+    tr.innerHTML=`<td>${fmtMD(p.date)}</td><td>${esc(p.name)}</td><td>${esc(p.weight||'')}</td>
       <td><span class="pill n">${p.cat}</span></td>
       <td>${esc(p.channel||'')}</td>
-      <td style="text-align:right">${money(num(p.amount))}</td>`;
+      <td style="text-align:right">${money(num(p.amount))}</td>
+      <td><button type="button" class="btn ghost xs" onclick="editPurchase('${p.id}')">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delPurchase('${p.id}')" style="color:var(--red)">删除</button></td>`;
     tb.appendChild(tr);});
   q('#purTable tfoot').innerHTML=
-    `<tr class="tot"><td colspan="6">合计（${list.length} 项）</td><td style="text-align:right">${money(total)}</td></tr>`;
+    `<tr class="tot"><td colspan="5">合计（${list.length} 项）</td><td style="text-align:right">${money(total)}</td><td></td></tr>`;
   document.getElementById('purMonthTotal').value=money(total);
   {const pf=document.getElementById('purMonthTotal').closest('.field');if(pf&&pf.querySelector('label'))pf.querySelector('label').textContent=m?('当月进货合计（'+m+'）'):'全部进货合计';}
   let html='';Object.keys(catSum).sort().forEach(c=>{html+=stat(c,money(catSum[c]));});
