@@ -264,8 +264,8 @@
   <!-- 每日记账 -->
   <section id="tab-daily">
     <div class="card">
-      <h2>📅 每日记账 <span class="tag" id="dailyDateLabel"></span></h2>
-      <div class="field" style="margin-bottom:14px"><label>记录日期</label>
+      <h2>📅 每日记账</h2>
+      <div class="field" style="margin-bottom:14px"><label style="font-size:9px">记录日期</label>
         <input type="date" id="dailyDate" onchange="renderDaily()"></div>
       <div id="blockA"></div>
       <div id="blockB" style="margin-top:18px"></div>
@@ -336,11 +336,11 @@
     <div class="card">
       <h2>📊 月度统计 <span class="tag" id="monthLabel"></span></h2>
       <div class="summary" id="monthSummary"></div>
-      <div class="hint">毛利润=实际营业额-进货成本；毛利率=毛利润/实际营业额；当月利润=当月实际营业额-成本总合计。</div>
+      <div class="hint">毛利润=实际营业额-进货成本；毛利率=毛利润/实际营业额；当月现金流利润=当月实际营业额-成本总合计。</div>
       <h2 style="margin-top:18px">📋 月度明细 <span class="tag" id="monthDetailYearTag"></span></h2>
       <div class="table-wrap">
         <table id="monthDetailTable" class="month-detail-table">
-          <thead><tr><th style="width:10%">月份</th><th style="width:10%">实际营业额</th><th style="width:10%">进货成本</th><th style="width:10%">毛利润</th><th style="width:10%">毛利率</th><th style="width:10%">固定成本</th><th style="width:10%">其他杂费</th><th style="width:10%">当月利润</th><th style="width:10%">记账天数</th><th style="width:10%">操作</th></tr></thead>
+          <thead><tr><th style="width:10%">月份</th><th style="width:10%">实际营业额</th><th style="width:10%">进货成本</th><th style="width:10%">毛利润</th><th style="width:10%">毛利率</th><th style="width:10%">固定成本</th><th style="width:10%">其他杂费</th><th style="width:10%">当月现金流利润</th><th style="width:10%">记账天数</th><th style="width:10%">操作</th></tr></thead>
           <tbody></tbody>
           <tfoot></tfoot>
         </table>
@@ -646,7 +646,6 @@ function readChInput(k){
 function renderDaily(){
   const date=document.getElementById('dailyDate').value||today();
   document.getElementById('dailyDate').value=date;
-  document.getElementById('dailyDateLabel').textContent=date;
   document.getElementById('blockA').innerHTML=renderBlock(BLOCKS.A);
   document.getElementById('blockB').innerHTML=renderBlock(BLOCKS.B);
   updateDayComputed();renderMonthTurnover();renderDailyDetail();
@@ -834,7 +833,7 @@ function renderMonthly(){
   document.getElementById('monthSummary').innerHTML=
     stat('毛利润',money(gross))+
     stat('毛利率',(actualTurnover>0?grossRate.toFixed(2):'0.00')+'%')+
-    stat('当月利润',money(net))+
+    stat('当月现金流利润',money(net))+
     stat('记账天数',Object.keys(dayMap).length+' 天');
   document.getElementById('monthNet').value=actualTurnover;
   const days=Object.keys(dayMap).sort();
@@ -970,7 +969,7 @@ function onExtraEdit(i,v){
   document.getElementById('monthSummary').innerHTML=
     stat('毛利润',money(gross))+
     stat('毛利率',(actualTurnover>0?grossRate.toFixed(2):'0.00')+'%')+
-    stat('当月利润',money(net))+
+    stat('当月现金流利润',money(net))+
     stat('记账天数',Object.keys(dayMap).length+' 天');
 }
 function showConfirm(msg, onYes){
