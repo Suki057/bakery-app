@@ -769,12 +769,11 @@ function renderDailyDetail(){
 }
 function editDay(d){
   document.getElementById('dailyDate').value=d;
-  showTab('daily');
   // 把该日期已保存的明细回填到表单草稿，方便直接在原数据上修改
   const day={ch:{}};
   (S.records||[]).filter(r=>r.date===d).forEach(r=>{day.ch[r.ch]={r:r.r,n:r.n,m:r.m};});
   S.draft[d]=day;
-  renderDaily();
+  switchTab('daily'); // 切换到每日记账并渲染（此时已带出原数据）
   // 自动向上滑动到「每日记账」表单板块并高亮提示
   const card=document.querySelector('#tab-daily .card');
   if(card){
@@ -947,7 +946,7 @@ function renderMonthlyDetail(){
     <td></td>
   </tr>`;
 }
-function editMonth(m){document.getElementById('monthPick').value=m;showTab('monthly');renderMonthly();}
+function editMonth(m){document.getElementById('monthPick').value=m;switchTab('monthly');renderMonthly();}
 function delMonth(m){
   showConfirm('删除「'+m+'」整月数据？该月所有记账、进货记录将被移入回收站。',()=>{
     const records=(S.records||[]).filter(r=>r.date&&r.date.startsWith(m));
@@ -1680,6 +1679,17 @@ function download(name,content){const blob=new Blob([content],{type:'text/plain'
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
   URL.revokeObjectURL(a.href);}
 
+/* SW 更新提示：检测到新版本时显示横幅，并切到新版后自动刷新 */
+function showUpdateBanner(){
+  if(document.getElementById('swUpdateBanner'))return;
+  const b=document.createElement('div');b.id='swUpdateBanner';
+  b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff9800;color:#fff;font-size:14px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.25)';
+  const span=document.createElement('span');span.textContent='🔄 发现新版本，点击立即更新';b.appendChild(span);
+  const btn=document.createElement('button');btn.textContent='刷新';
+  btn.style.cssText='background:#fff;color:#e65100;border:none;border-radius:6px;padding:4px 12px;font-weight:600;cursor:pointer;margin-left:10px';
+  btn.onclick=()=>location.reload();b.appendChild(btn);
+  document.body.appendChild(b);
+}
 /* init */
 purgeTrash();
 document.getElementById('dailyDate').value=today();
@@ -1689,7 +1699,13 @@ document.getElementById('dailyDetailMonth').value=ym(new Date());
 document.getElementById('monthTurnoverMonth').value=ym(new Date());
 document.getElementById('purDate').value=today();
 fillCatSelect('purCat');renderPurchase();renderDaily();renderSettings();renderMonthTurnover();renderDailyDetail();
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').then(reg=>{
+    if(reg)reg.addEventListener('updatefound',()=>{const nw=reg.installing;if(!nw)return;
+      nw.addEventListener('statechange',()=>{if(nw.state==='installed'&&navigator.serviceWorker.controller)showUpdateBanner();});});
+  }).catch(()=>{});
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!window._swReloaded){window._swReloaded=true;location.reload();}});
+}
 </script>
 </body>
 </html>
