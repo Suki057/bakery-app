@@ -767,7 +767,23 @@ function renderDailyDetail(){
   });
   tf.innerHTML=`<tr class="tot"><td>合计</td><td colspan="5"></td><td style="text-align:right"><strong>${money(total.actualProfit)}</strong><span class="small">营业额 ${money(total.dailyTurnover)} / 实际 ${money(total.actualTurnover)}</span></td><td></td></tr>`;
 }
-function editDay(d){document.getElementById('dailyDate').value=d;showTab('daily');renderDaily();}
+function editDay(d){
+  document.getElementById('dailyDate').value=d;
+  showTab('daily');
+  // 把该日期已保存的明细回填到表单草稿，方便直接在原数据上修改
+  const day={ch:{}};
+  (S.records||[]).filter(r=>r.date===d).forEach(r=>{day.ch[r.ch]={r:r.r,n:r.n,m:r.m};});
+  S.draft[d]=day;
+  renderDaily();
+  // 自动向上滑动到「每日记账」表单板块并高亮提示
+  const card=document.querySelector('#tab-daily .card');
+  if(card){
+    card.scrollIntoView({behavior:'smooth',block:'start'});
+    card.style.transition='box-shadow .3s ease';
+    card.style.boxShadow='0 0 0 3px rgba(255,150,60,.6), 0 10px 28px rgba(0,0,0,.12)';
+    setTimeout(()=>{card.style.boxShadow='';},1700);
+  }
+}
 function delDay(d){
   showConfirm('删除「'+d+'」当日所有记账明细？删除后可到回收站恢复。',()=>{
     const list=(S.records||[]).filter(r=>r.date===d);
@@ -781,12 +797,19 @@ function saveBlock(key){
   const day=getDraft(date);let count=0;
   block.channels.forEach(c=>{const d=chDraft(day,c.k);
     const base=num(d[block.profitBase]),m=useM(d.m);
-    if(base<=0)return;
+    if(base<=0){
+      // 编辑时把某渠道清空：删除该日期该渠道已有的旧记录，避免残留
+      if(S.records&&S.records.length)S.records=S.records.filter(x=>!(x.date===date&&x.ch===c.k));
+      return;
+    }
     const profit=calcProfitSimple(base,m);
-    S.records=S.records||[];
-    S.records.push({id:'r'+Date.now()+'_'+c.k+'_'+count,date,ch:c.k,name:c.n,
+    const rec={id:'r'+Date.now()+'_'+c.k+'_'+count,date,ch:c.k,name:c.n,
       r:block.profitBase==='r'?base:num(d.r),n:block.profitBase==='n'?base:num(d.n),
-      cost:0,m:num(m),profit});
+      cost:0,m:num(m),profit};
+    // 同日期+同渠道已存在则更新（编辑场景），否则新增，杜绝重复
+    const idx=(S.records||[]).findIndex(x=>x.date===date&&x.ch===c.k);
+    if(idx>=0){rec.id=S.records[idx].id;S.records[idx]=rec;}
+    else{S.records=S.records||[];S.records.push(rec);}
     count++;});
   if(!count){toast('请先填写数据再保存');return;}
   block.channels.forEach(c=>{if(day.ch[c.k])delete day.ch[c.k];});
