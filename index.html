@@ -830,7 +830,7 @@ function renderMonthly(){
   Object.values(dayMap).forEach(d=>{actualTurnover+=d.actualTurnover;actualProfit+=d.actualProfit;dailyTurnover+=d.dailyTurnover;});
   const gross=actualTurnover-mc.purchase;
   const grossRate=actualTurnover>0?(gross/actualTurnover)*100:0;
-  const net=actualTurnover-mc.purchase-fixed-num(mc.marketing)-extrasTotal;
+  const net=actualTurnover-mc.purchase-fixed-num(mc.marketing)-num(mc.event)-extrasTotal;
   document.getElementById('monthSummary').innerHTML=
     stat('毛利润',money(gross))+
     stat('毛利率',(actualTurnover>0?grossRate.toFixed(2):'0.00')+'%')+
@@ -878,7 +878,7 @@ function getMonthStats(m){
   Object.values(dayMap).forEach(d=>{actualTurnover+=d.actualTurnover;dailyTurnover+=d.dailyTurnover;actualProfit+=d.actualProfit;});
   const gross=actualTurnover-mc.purchase;
   const grossRate=actualTurnover>0?(gross/actualTurnover)*100:0;
-  const net=actualTurnover-mc.purchase-fixed-extrasTotal;
+  const net=actualTurnover-mc.purchase-fixed-num(mc.event)-extrasTotal;
   return {m,actualTurnover,dailyTurnover,actualProfit,purchase:mc.purchase,fixed,extrasTotal,gross,grossRate,net,days:Object.keys(dayMap).length};
 }
 function renderMonthlyDetail(){
@@ -965,7 +965,7 @@ function onExtraEdit(i,v){
   let actualTurnover=0;Object.values(dayMap).forEach(d=>actualTurnover+=d.actualTurnover);
   const gross=actualTurnover-mc.purchase;
   const grossRate=actualTurnover>0?(gross/actualTurnover)*100:0;
-  const net=actualTurnover-mc.purchase-fixed-num(mc.marketing)-extrasTotal;
+  const net=actualTurnover-mc.purchase-fixed-num(mc.marketing)-num(mc.event)-extrasTotal;
   document.getElementById('monthSummary').innerHTML=
     stat('毛利润',money(gross))+
     stat('毛利率',(actualTurnover>0?grossRate.toFixed(2):'0.00')+'%')+
