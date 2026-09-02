@@ -326,7 +326,7 @@
       <div id="monthExtras" style="margin-top:12px"></div>
       <div class="row grid2" style="margin-top:12px">
         <div class="field currency-field"><label>固定成本合计（房租+水电+工资）</label><span class="currency">¥</span><input id="monthFixedTotal" disabled></div>
-        <div class="field currency-field"><label>成本合计（上述所有成本叠加）</label><span class="currency">¥</span><input id="monthCostTotal" disabled></div>
+        <div class="field currency-field"><label>成本总合计（固定成本+活动策划+外卖平台营销+进货成本+其他杂费）</label><span class="currency">¥</span><input id="monthCostTotal" disabled></div>
       </div>
       <div class="actions" style="justify-content:space-between;margin-top:14px">
         <button class="btn sm" onclick="saveMonthCosts()">✅ 确定保存</button>
@@ -336,11 +336,11 @@
     <div class="card">
       <h2>📊 月度统计 <span class="tag" id="monthLabel"></span></h2>
       <div class="summary" id="monthSummary"></div>
-      <div class="hint">毛利润=实际营业额-进货成本；毛利率=毛利润/实际营业额；净利润=实际营业额-进货成本-固定成本合计-其他杂费。</div>
+      <div class="hint">毛利润=实际营业额-进货成本；毛利率=毛利润/实际营业额；当月利润=当月实际营业额-成本总合计。</div>
       <h2 style="margin-top:18px">📋 月度明细 <span class="tag" id="monthDetailYearTag"></span></h2>
       <div class="table-wrap">
         <table id="monthDetailTable" class="month-detail-table">
-          <thead><tr><th style="width:10%">月份</th><th style="width:10%">实际营业额</th><th style="width:10%">进货成本</th><th style="width:10%">毛利润</th><th style="width:10%">毛利率</th><th style="width:10%">固定成本</th><th style="width:10%">其他杂费</th><th style="width:10%">净利润</th><th style="width:10%">记账天数</th><th style="width:10%">操作</th></tr></thead>
+          <thead><tr><th style="width:10%">月份</th><th style="width:10%">实际营业额</th><th style="width:10%">进货成本</th><th style="width:10%">毛利润</th><th style="width:10%">毛利率</th><th style="width:10%">固定成本</th><th style="width:10%">其他杂费</th><th style="width:10%">当月利润</th><th style="width:10%">记账天数</th><th style="width:10%">操作</th></tr></thead>
           <tbody></tbody>
           <tfoot></tfoot>
         </table>
@@ -822,7 +822,7 @@ function renderMonthly(){
   renderMonthExtras(mc.extras);
   const fixed=mc.rent+mc.utility+mc.wage;
   const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
-  const costTotal=fixed+num(mc.event)+num(mc.marketing)+extrasTotal;
+  const costTotal=fixed+num(mc.event)+num(mc.marketing)+num(mc.purchase)+extrasTotal;
   document.getElementById('monthCostTotal').value=costTotal;
   document.getElementById('monthFixedTotal').value=fixed;
   const dayMap=monthDayMap(m);
@@ -830,11 +830,11 @@ function renderMonthly(){
   Object.values(dayMap).forEach(d=>{actualTurnover+=d.actualTurnover;actualProfit+=d.actualProfit;dailyTurnover+=d.dailyTurnover;});
   const gross=actualTurnover-mc.purchase;
   const grossRate=actualTurnover>0?(gross/actualTurnover)*100:0;
-  const net=actualTurnover-mc.purchase-fixed-num(mc.marketing)-num(mc.event)-extrasTotal;
+  const net=actualTurnover-costTotal;
   document.getElementById('monthSummary').innerHTML=
     stat('毛利润',money(gross))+
     stat('毛利率',(actualTurnover>0?grossRate.toFixed(2):'0.00')+'%')+
-    stat('净利润',money(net))+
+    stat('当月利润',money(net))+
     stat('记账天数',Object.keys(dayMap).length+' 天');
   document.getElementById('monthNet').value=actualTurnover;
   const days=Object.keys(dayMap).sort();
@@ -872,13 +872,14 @@ function saveMonthCosts(){
 function getMonthStats(m){
   const mc=getMonthCosts(m);
   const fixed=mc.rent+mc.utility+mc.wage;
-  const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0)+num(mc.marketing);
+  const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
+  const costTotal=fixed+num(mc.event)+num(mc.marketing)+num(mc.purchase)+extrasTotal;
   const dayMap=monthDayMap(m);
   let actualTurnover=0,dailyTurnover=0,actualProfit=0;
   Object.values(dayMap).forEach(d=>{actualTurnover+=d.actualTurnover;dailyTurnover+=d.dailyTurnover;actualProfit+=d.actualProfit;});
   const gross=actualTurnover-mc.purchase;
   const grossRate=actualTurnover>0?(gross/actualTurnover)*100:0;
-  const net=actualTurnover-mc.purchase-fixed-num(mc.event)-extrasTotal;
+  const net=actualTurnover-costTotal;
   return {m,actualTurnover,dailyTurnover,actualProfit,purchase:mc.purchase,fixed,extrasTotal,gross,grossRate,net,days:Object.keys(dayMap).length};
 }
 function renderMonthlyDetail(){
@@ -960,16 +961,16 @@ function onExtraEdit(i,v){
   const mc=getMonthCosts(m);
   const fixed=mc.rent+mc.utility+mc.wage;
   const extrasTotal=(mc.extras||[]).reduce((s,e)=>s+num(e.amount),0);
-  document.getElementById('monthCostTotal').value=fixed+num(mc.event)+num(mc.marketing)+extrasTotal;
+  document.getElementById('monthCostTotal').value=fixed+num(mc.event)+num(mc.marketing)+num(mc.purchase)+extrasTotal;
   const dayMap=monthDayMap(m);
   let actualTurnover=0;Object.values(dayMap).forEach(d=>actualTurnover+=d.actualTurnover);
   const gross=actualTurnover-mc.purchase;
   const grossRate=actualTurnover>0?(gross/actualTurnover)*100:0;
-  const net=actualTurnover-mc.purchase-fixed-num(mc.marketing)-num(mc.event)-extrasTotal;
+  const net=actualTurnover-costTotal;
   document.getElementById('monthSummary').innerHTML=
     stat('毛利润',money(gross))+
     stat('毛利率',(actualTurnover>0?grossRate.toFixed(2):'0.00')+'%')+
-    stat('净利润',money(net))+
+    stat('当月利润',money(net))+
     stat('记账天数',Object.keys(dayMap).length+' 天');
 }
 function showConfirm(msg, onYes){
