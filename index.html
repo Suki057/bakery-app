@@ -283,7 +283,12 @@
       <div class="summary" id="monthTurnoverSummary"></div>
     </div>
     <div class="card">
-      <h2>📋 数据明细 <span class="tag">按日期聚合</span> <span class="tag" id="dailyDetailYearTag"></span></h2>
+      <h2>📋 数据明细 <span class="tag">按日期聚合</span>
+        <span style="float:right;font-size:13px;font-weight:normal;display:inline-flex;align-items:center;gap:6px">
+          <label>选择月份</label>
+          <input type="month" id="dailyDetailMonth" onchange="renderDailyDetail()">
+        </span>
+      </h2>
       <div class="table-wrap">
         <table id="dailyDetailTable" class="daily-detail-table">
           <thead><tr><th style="width:10%">日期</th><th style="width:12%">堂食</th><th style="width:12%">画室</th><th style="width:12%">美团</th><th style="width:12%">闪购</th><th style="width:12%">京东</th><th style="width:15%">合计</th><th style="width:15%">操作</th></tr></thead>
@@ -291,7 +296,7 @@
           <tfoot></tfoot>
         </table>
       </div>
-      <div class="hint">本表展示所有已保存日期的各渠道数据。堂食/画室显示营业额+利润；美团/闪购/京东显示到手价+利润。</div>
+      <div class="hint">选择上方月份查看该月每日记账明细。堂食/画室显示营业额+利润；美团/闪购/京东显示到手价+利润。</div>
     </div>
   </section>
 
@@ -731,14 +736,15 @@ function renderMonthTurnover(){
 }
 function renderDailyDetail(){
   const tb=q('#dailyDetailTable tbody');const tf=q('#dailyDetailTable tfoot');
+  const dm=document.getElementById('dailyDetailMonth').value||ym(new Date());
+  document.getElementById('dailyDetailMonth').value=dm;
   const dayMap={};
   (S.records||[]).forEach(r=>{
     if(!dayMap[r.date])dayMap[r.date]={};
     dayMap[r.date][r.ch]={r:num(r.r),n:num(r.n),profit:num(r.profit)};
   });
-  const dates=Object.keys(dayMap).sort((a,b)=>b.localeCompare(a));
-  document.getElementById('dailyDetailYearTag').textContent=dataYear()+'年';
-  if(!dates.length){tb.innerHTML='<tr><td colspan="8" class="muted">暂无已保存的明细</td></tr>';tf.innerHTML='';return;}
+  const dates=Object.keys(dayMap).filter(d=>(d||'').startsWith(dm)).sort((a,b)=>b.localeCompare(a));
+  if(!dates.length){tb.innerHTML='<tr><td colspan="8" class="muted">未选择月份或该月暂无明细</td></tr>';tf.innerHTML='';return;}
   let total={dailyTurnover:0,actualTurnover:0,actualProfit:0};
   tb.innerHTML='';
   dates.forEach(d=>{
@@ -1656,9 +1662,10 @@ purgeTrash();
 document.getElementById('dailyDate').value=today();
 document.getElementById('monthPick').value=ym(new Date());
 document.getElementById('purMonth').value=ym(new Date());
+document.getElementById('dailyDetailMonth').value=ym(new Date());
 document.getElementById('monthTurnoverMonth').value=ym(new Date());
 document.getElementById('purDate').value=today();
-fillCatSelect('purCat');renderPurchase();renderDaily();renderSettings();renderMonthTurnover();
+fillCatSelect('purCat');renderPurchase();renderDaily();renderSettings();renderMonthTurnover();renderDailyDetail();
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 </script>
 </body>
