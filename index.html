@@ -495,7 +495,7 @@
   <section id="tab-trash" style="display:none">
     <div class="card">
       <h2>🗑️ 回收站 <span class="tag">21 天后自动永久删除</span></h2>
-      <p class="muted" style="margin-bottom:12px">删除的记账明细、进货、资金记录、自定义成本项都会进入这里。可随时恢复，或手动永久删除。超过 21 天将自动清除。</p>
+      <p class="muted" style="margin-bottom:12px">所有被删除的数据（记账明细、进货、资金记录、成本项、初始投入、基础设施投入、事项选项、进货分类/渠道等）都会进入这里。可随时恢复，或手动永久删除。超过 21 天将自动清除。</p>
       <table id="trashTable">
         <thead><tr><th>删除日期</th><th>类型</th><th>内容</th><th>剩余(天)</th><th>操作</th></tr></thead>
         <tbody></tbody>
@@ -1263,6 +1263,7 @@ function renderInfra(){
         let opts='<option value="">请选择</option>';
         cats.forEach(c=>{opts+=`<option value="${esc(c)}" ${r.cat===c?'selected':''}>${esc(c)}</option>`;});
         catCell=`<select class="box" onchange="onInfraCatChange(${i},this.value)">${opts}</select>`;
+        if((ini.customCats||[]).includes(r.cat)){ catCell+=`<button type="button" class="btn ghost xs op-del" onclick="delInfraCat(${i})" style="color:var(--red);padding:2px 6px;margin-left:4px" title="删除该事项选项">✕</button>`; }
       }
       html+=`<tr data-id="${id}">
         <td>${catCell}</td>
@@ -1311,7 +1312,23 @@ function addInfraRow(){
 }
 function delInfraRow(i){
   const ini=getInitial(); if(!ini.infra[i])return;
-  ini.infra.splice(i,1); S.initial=ini; save(); renderInfra(); renderInitialSummary();
+  const row=ini.infra[i];
+  showConfirm('删除这条基础设施投入记录？删除后可到回收站恢复。',()=>{
+    addToTrash('infra',row,'基础设施投入 '+(row.cat||'')+' '+money(row.amount));
+    ini.infra.splice(i,1); S.initial=ini; save(); renderInfra(); renderInitialSummary(); renderTrash(); toast('已移入回收站');
+  });
+}
+function delInfraCat(i){
+  const ini=getInitial(); const row=ini.infra[i];
+  if(!row||!row.cat)return;
+  const cat=row.cat;
+  if(!(ini.customCats||[]).includes(cat))return;
+  showConfirm('删除事项选项「'+cat+'」？该选项将从所有下拉中移除（已选它的记录会变为空选择，数据不会丢失）。删除后可到回收站恢复。',()=>{
+    ini.customCats=ini.customCats.filter(c=>c!==cat);
+    row.cat='';
+    S.initial=ini; save(); renderInfra(); renderInitialSummary();
+    addToTrash('infraCat',{cat},'事项选项 '+cat); renderTrash(); toast('已移入回收站');
+  });
 }
 function renderInitialSummary(){
   const ini=getInitial();
@@ -1485,12 +1502,18 @@ function optMgrRows(kind,list){
   return list.map((c,i)=>`<div class="opt-mgr-row"><span>${esc(c)}</span><button type="button" class="btn ghost xs opt-del" onclick="delOption('${kind}',${i})">删除</button></div>`).join('');
 }
 function delOption(kind,idx){
-  if(kind==='cat'){if(!S.cats)return;S.cats.splice(idx,1);}else{if(!S.purChannels)return;S.purChannels.splice(idx,1);}
-  save();
   const list=kind==='cat'?(S.cats||[]):(S.purChannels||[]);
-  const box=document.getElementById('optMgrList');if(box)box.innerHTML=optMgrRows(kind,list);
-  fillCatSelect('purCat');fillChannelSelect('purChannel');
-  if(document.getElementById('purchaseModalBackdrop')){fillCatSelect('editPurCat');fillChannelSelect('editPurChannel');}
+  const cat=list[idx]; if(cat===undefined)return;
+  showConfirm('删除选项「'+cat+'」？已选它的记录不受影响，删除后可到回收站恢复。',()=>{
+    if(kind==='cat'){S.cats=S.cats||[];S.cats.splice(idx,1);}else{S.purChannels=S.purChannels||[];S.purChannels.splice(idx,1);}
+    save();
+    addToTrash(kind==='cat'?'cat':'channel',{cat},(kind==='cat'?'进货分类 ':'进货渠道 ')+cat);
+    const nl=kind==='cat'?(S.cats||[]):(S.purChannels||[]);
+    const box=document.getElementById('optMgrList');if(box)box.innerHTML=optMgrRows(kind,nl);
+    fillCatSelect('purCat');fillChannelSelect('purChannel');
+    if(document.getElementById('purchaseModalBackdrop')){fillCatSelect('editPurCat');fillChannelSelect('editPurChannel');}
+    renderTrash();toast('已移入回收站');
+  });
 }
 function closeOptMgr(){const b=document.getElementById('optMgrBackdrop');if(b)b.remove();}
 function guessCategory(name,use){
@@ -1637,7 +1660,7 @@ function exportPurchaseCSV(){
 /* ---------- 回收站 ---------- */
 function addToTrash(type,data,label){S.trash=S.trash||[];S.trash.push({id:'t'+Date.now(),type,data,label,deletedAt:today()});}
 function purgeTrash(){if(!S.trash)return;const cut=daysAgoStr(TRASH_DAYS);S.trash=S.trash.filter(t=>t.deletedAt>=cut);}
-function trashType(t){return {record:'记账明细',purchase:'进货',ledger:'资金变动',fund:'资金',fundItem:'资金明细',extra:'成本项',initialItem:'初始投入',monthly:'月度成本'}[t]||t;}
+function trashType(t){return {record:'记账明细',purchase:'进货',ledger:'资金变动',fund:'资金',fundItem:'资金明细',extra:'成本项',initialItem:'初始投入',monthly:'月度成本',infra:'基础设施投入',infraCat:'事项选项',cat:'进货分类',channel:'进货渠道'}[t]||t;}
 function renderTrash(){purgeTrash();const tb=q('#trashTable tbody');tb.innerHTML='';
   if(!S.trash||!S.trash.length){tb.innerHTML='<tr><td colspan="5" class="muted">回收站为空</td></tr>';return;}
   S.trash.slice().reverse().forEach(t=>{const left=TRASH_DAYS-ageDays(t.deletedAt);
@@ -1661,7 +1684,11 @@ function restoreTrash(id){const i=(S.trash||[]).findIndex(t=>t.id===id);if(i<0)r
   else if(t.type==='extra'){S.monthly[t.data.month]=S.monthly[t.data.month]||{extras:[]};S.monthly[t.data.month].extras.push({name:t.data.name,amount:t.data.amount});}
   else if(t.type==='monthly'){const m=t.data.month||t.data._month||'';if(m){S.monthly[m]=S.monthly[m]||{};Object.assign(S.monthly[m],t.data);delete S.monthly[m]._month;}}
   else if(t.type==='initialItem'){S.initial=getInitial();S.initial[t.data.key]=S.initial[t.data.key]||[];S.initial[t.data.key].push(t.data.item);}
-  S.trash.splice(i,1);save();renderTrash();renderMonthly();renderFunds();renderInitial();toast('已恢复');}
+  else if(t.type==='infra'){S.initial=getInitial();S.initial.infra=S.initial.infra||[];S.initial.infra.push(t.data);}
+  else if(t.type==='infraCat'){S.initial=getInitial();S.initial.customCats=S.initial.customCats||[];if(!S.initial.customCats.includes(t.data.cat))S.initial.customCats.push(t.data.cat);}
+  else if(t.type==='cat'){S.cats=S.cats||[];if(!S.cats.includes(t.data.cat))S.cats.push(t.data.cat);}
+  else if(t.type==='channel'){S.purChannels=S.purChannels||[];if(!S.purChannels.includes(t.data.cat))S.purChannels.push(t.data.cat);}
+  S.trash.splice(i,1);save();renderTrash();renderMonthly();renderFunds();renderInitial();renderPurchase();toast('已恢复');}
 function permDelete(id){S.trash=S.trash.filter(t=>t.id!==id);save();renderTrash();toast('已永久删除');}
 function emptyTrash(){
   if(!S.trash||!S.trash.length){toast('回收站已经是空的');return;}
