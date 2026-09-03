@@ -227,18 +227,19 @@
   .field.currency-field .currency{position:absolute;left:12px;bottom:10px;font-size:11px;color:var(--muted);font-weight:600;pointer-events:none;z-index:2}
   .field.currency-field input{padding-left:26px}
   .muted{color:var(--muted);font-size:10px}
-  .rent-item{margin-bottom:18px}
-  .rent-item:last-child{margin-bottom:0}
-  .rent-item-labels{display:grid;grid-template-columns:1fr 1fr 90px;gap:12px;margin-bottom:6px;padding:0 4px;font-size:10px;color:var(--muted);font-weight:600}
-  .rent-item-row{display:grid;grid-template-columns:1fr 1fr 90px;gap:12px;align-items:center}
-  .rent-item-row input{font-size:16px;padding:7px 10px}
-  .rent-item-row input:disabled{background:rgba(255,255,255,0.22);opacity:0.75}
-  .rent-item-row .btn{width:100%;text-align:center;padding:8px 0}
+  .infra-table{min-width:560px!important;table-layout:fixed;width:100%}
+  .infra-table th,.infra-table td{text-align:left;vertical-align:top;padding:6px 4px}
+  .infra-table th{font-size:10px;color:var(--muted);font-weight:700}
+  .infra-table td .btn{margin:0}
+  .infra-table .tot{font-weight:800;background:var(--band)}
+  .infra-table .tot-amt{color:#2D4A5E;font-weight:800;font-size:14px}
+  .box{width:100%;font-size:12px;padding:7px 8px;border:1px solid var(--edge);border-radius:5px;background:rgba(255,255,255,0.55);color:#2D4A5E;outline:none;box-sizing:border-box}
+  .box:focus{background:#fff;border-color:#C4F7FE;box-shadow:0 0 0 3px rgba(196,247,254,.25)}
+  .infra-table select.box{padding-right:4px}
   @media(max-width:640px){
-    .rent-item-labels{grid-template-columns:1fr 1fr 70px;gap:8px;font-size:9px}
-    .rent-item-row{grid-template-columns:1fr 1fr 70px;gap:8px}
-    .rent-item-row input{padding:6px 8px}
-    .rent-item-row .btn{padding:7px 0;font-size:10px}
+    .infra-table{min-width:520px}
+    .box{font-size:11px;padding:6px 6px}
+    .infra-table th{font-size:9px}
   }
 </style>
 </head>
@@ -459,7 +460,7 @@
       <div class="summary" id="initialSummary"></div>
     </div>
     <div class="card">
-      <h2>🏠 房租&装修&证件&收款系统</h2>
+      <h2>🏗️ 基础设施投入</h2>
       <div id="rentItems"></div>
     </div>
     <div class="card">
@@ -610,12 +611,23 @@ function migrateInitial(ini){
     }
     delete ini.license;
   }
+  if(!Array.isArray(ini.infra)){
+    ini.infra=[];
+    const MAP={deposit:'租金押金',firstRent:'首期房租',fire:'证件办理（营业执照&食品证）',renovation:'装修金额',takeaway:'外卖平台',pos:'点单系统',pastCost:'25-26年已投入成本'};
+    Object.keys(MAP).forEach(k=>{
+      const o=ini[k];
+      if(o && (num(o.amount)>0 || (o.note && o.note!==''))){
+        ini.infra.push({id:'infra_'+k,cat:MAP[k],amount:num(o.amount),time:'',purpose:'',note:o.note||''});
+      }
+    });
+  }
+  if(!Array.isArray(ini.customCats)) ini.customCats=[];
   return ini;
 }
 function def(){return{settings:{rent:0,utility:0,wage:0},
   draft:{},records:[],monthly:{},
   funds:{working:0,original:0,fixed:0,updated:'',ledger:[],fixedItems:[],workingItems:[]},
-  initial:{deposit:{amount:0,note:'',locked:false},firstRent:{amount:0,note:'',locked:false},fire:{amount:0,note:'',locked:false},renovation:{amount:0,note:'',locked:false},takeaway:{amount:0,note:'',locked:false},pos:{amount:0,note:'',locked:false},pastCost:{amount:0,note:'',locked:false},equipment:[],inventory:[],summary:{total:'',fixed:'',equipment:'',inventory:''}},
+  initial:{deposit:{amount:0,note:'',locked:false},firstRent:{amount:0,note:'',locked:false},fire:{amount:0,note:'',locked:false},renovation:{amount:0,note:'',locked:false},takeaway:{amount:0,note:'',locked:false},pos:{amount:0,note:'',locked:false},pastCost:{amount:0,note:'',locked:false},equipment:[],inventory:[],infra:[],customCats:[],summary:{total:'',fixed:'',equipment:'',inventory:''}},
   cats:CATS.slice(),purChannels:['美团','淘宝','淘宝闪购','京东','拼多多','线下'],purchase:[],trash:[]}}
 function save(){localStorage.setItem(KEY,JSON.stringify(S));toast('已保存')}
 function num(v){const n=parseFloat((''+v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n}
@@ -1216,71 +1228,101 @@ function delLedger(i){
 
 /* ---------- 初始投入 ---------- */
 function getInitial(){return S.initial||def().initial;}
-const RENT_KEYS=[
-  {k:'deposit',label:'租房押金'},
-  {k:'firstRent',label:'首期房租'},
-  {k:'fire',label:'证件办理（营业执照&食品证）'},
-  {k:'renovation',label:'装修金额'},
-  {k:'takeaway',label:'外卖平台'},
-  {k:'pos',label:'点单系统'},
-  {k:'pastCost',label:'25-26年已投入成本'}
-];
 function renderInitial(){
   const ini=getInitial();
-  renderRentItems();
+  renderInfra();
   renderInitialList('equipment','iniEquipmentTable','iniEquipmentTag',['name','amount','note'],['设备名称','购买金额','备注'],it=>money(it.amount));
   renderInitialList('inventory','iniInventoryTable','iniInventoryTag',['name','qty','amount','note'],['名称','数量','金额','备注'],it=>money(it.amount));
   renderInitialSummary();
 }
-function renderRentItems(){
+let _infraCustomIdx=-1;
+const INFRA_DEFAULT_CATS=['其它','租金押金','首期房租','证件办理（营业执照&食品证）','装修金额','点单系统','外卖平台','25-26年已投入成本'];
+function infraTotal(){const ini=getInitial();return (ini.infra||[]).reduce((s,r)=>s+num(r.amount),0);}
+function renderInfra(){
   const ini=getInitial();
-  const wrap=document.getElementById('rentItems');
-  let html='';
-  RENT_KEYS.forEach(({k,label})=>{
-    const it=ini[k]||{amount:0,note:'',locked:false};
-    const disabled=it.locked?'disabled':'';
-    const btnLabel=it.locked?'编辑':'确定';
-    const btnClass=it.locked?'btn ghost sm':'btn sm';
-    html+=`
-    <div class="rent-item" data-key="${k}">
-      <div class="rent-item-labels"><span>${label}</span><span>备注</span><span></span></div>
-      <div class="rent-item-row">
-        <div class="field currency-field"><span class="currency">¥</span><input type="number" step="0.01" class="rent-amt" data-key="${k}" value="${num(it.amount)>0?it.amount:''}" oninput="onRentInput('${k}')" ${disabled}></div>
-        <div class="field"><input type="text" class="rent-note" data-key="${k}" value="${esc(it.note||'')}" placeholder="什么时候用、用在哪、特殊情况…" oninput="onRentInput('${k}')" ${disabled}></div>
-        <button type="button" class="${btnClass}" onclick="toggleRentLock('${k}')">${btnLabel}</button>
-      </div>
-    </div>`;
-  });
-  wrap.innerHTML=html;
+  const rows=ini.infra||[];
+  const cats=INFRA_DEFAULT_CATS.concat(ini.customCats||[]);
+  let html='<div class="table-wrap"><table class="infra-table"><thead><tr>'+
+    '<th style="width:30%">基础设施事项</th>'+
+    '<th style="width:17%">投入金额</th>'+
+    '<th style="width:13%">时间</th>'+
+    '<th style="width:15%">用途</th>'+
+    '<th style="width:15%">备注</th>'+
+    '<th style="width:10%"></th>'+
+    '</tr></thead><tbody>';
+  if(!rows.length){
+    html+='<tr><td colspan="6" class="muted" style="text-align:center;padding:10px">暂无记录，点击下方添加一行</td></tr>';
+  }else{
+    rows.forEach((r,i)=>{
+      const id=r.id||('infra_'+i);
+      let catCell;
+      if(_infraCustomIdx===i){
+        catCell='<input type="text" class="box" id="infraCustomInput" placeholder="输入自定义事项">'+
+                '<div style="display:flex;gap:4px;margin-top:4px"><button type="button" class="btn sm" onclick="saveInfraCustom()">保存</button><button type="button" class="btn ghost sm" onclick="cancelInfraCustom()">取消</button></div>';
+      }else{
+        let opts='<option value="">请选择</option>';
+        cats.forEach(c=>{opts+=`<option value="${esc(c)}" ${r.cat===c?'selected':''}>${esc(c)}</option>`;});
+        catCell=`<select class="box" onchange="onInfraCatChange(${i},this.value)">${opts}</select>`;
+      }
+      html+=`<tr data-id="${id}">
+        <td>${catCell}</td>
+        <td><div class="field currency-field"><span class="currency">¥</span><input type="number" step="0.01" class="box" value="${num(r.amount)>0?r.amount:''}" oninput="onInfraField(${i},'amount',this.value)"></div></td>
+        <td><input type="text" class="box" value="${esc(r.time||'')}" placeholder="如 2025-09" oninput="onInfraField(${i},'time',this.value)"></td>
+        <td><input type="text" class="box" value="${esc(r.purpose||'')}" placeholder="用途" oninput="onInfraField(${i},'purpose',this.value)"></td>
+        <td><input type="text" class="box" value="${esc(r.note||'')}" placeholder="备注" oninput="onInfraField(${i},'note',this.value)"></td>
+        <td><button type="button" class="btn ghost xs op-del" onclick="delInfraRow(${i})" style="color:var(--red)">删</button></td>
+      </tr>`;
+    });
+  }
+  html+='</tbody><tfoot><tr class="tot"><td colspan="5" style="text-align:right">合计</td><td class="tot-amt" id="infraTotal">'+money(infraTotal())+'</td></tr></tfoot></table></div>';
+  html+='<div class="actions" style="margin-top:12px"><button type="button" class="btn ghost sm" onclick="addInfraRow()">➕ 添加一行</button></div>';
+  document.getElementById('rentItems').innerHTML=html;
 }
-function onRentInput(key){
-  const ini=getInitial();
-  if(!ini[key] || typeof ini[key]!=='object') ini[key]={amount:0,note:'',locked:false};
-  ini[key].amount=num(q(`.rent-amt[data-key="${key}"]`).value);
-  ini[key].note=q(`.rent-note[data-key="${key}"]`).value;
+function onInfraField(i,field,value){
+  const ini=getInitial();if(!ini.infra[i])return;
+  ini.infra[i][field]=(field==='amount')?num(value):value;
   S.initial=ini;
-  clearTimeout(window._rentT);window._rentT=setTimeout(save,500);
+  clearTimeout(window._infraT);window._infraT=setTimeout(save,500);
+  const t=document.getElementById('infraTotal');if(t)t.textContent=money(infraTotal());
   renderInitialSummary();
 }
-function toggleRentLock(key){
+function onInfraCatChange(i,val){
+  if(val==='其它'){ _infraCustomIdx=i; renderInfra(); const inp=document.getElementById('infraCustomInput'); if(inp)inp.focus(); return; }
+  const ini=getInitial();if(!ini.infra[i])return;
+  ini.infra[i].cat=val; S.initial=ini; save(); renderInfra();
+}
+function saveInfraCustom(){
+  const inp=document.getElementById('infraCustomInput');
+  if(!inp)return;
+  const v=inp.value.trim();
+  if(!v){toast('请输入事项名称');if(inp)inp.focus();return;}
   const ini=getInitial();
-  if(!ini[key] || typeof ini[key]!=='object') ini[key]={amount:0,note:'',locked:false};
-  ini[key].locked=!ini[key].locked;
-  S.initial=ini;
-  save();
-  renderRentItems();
+  if(!ini.customCats)ini.customCats=[];
+  if(!ini.customCats.includes(v))ini.customCats.push(v);
+  if(ini.infra[_infraCustomIdx]) ini.infra[_infraCustomIdx].cat=v;
+  _infraCustomIdx=-1;
+  S.initial=ini; save(); renderInfra();
+}
+function cancelInfraCustom(){ _infraCustomIdx=-1; renderInfra(); }
+function addInfraRow(){
+  const ini=getInitial(); if(!ini.infra)ini.infra=[];
+  ini.infra.push({id:'infra_'+Date.now(),cat:'',amount:'',time:'',purpose:'',note:''});
+  S.initial=ini; save(); renderInfra();
+}
+function delInfraRow(i){
+  const ini=getInitial(); if(!ini.infra[i])return;
+  ini.infra.splice(i,1); S.initial=ini; save(); renderInfra(); renderInitialSummary();
 }
 function renderInitialSummary(){
   const ini=getInitial();
-  const fixed=num(ini.deposit.amount)+num(ini.firstRent.amount)+num(ini.fire.amount)+num(ini.renovation.amount)+num(ini.takeaway.amount)+num(ini.pos.amount);
-  const pastCost=num(ini.pastCost.amount);
+  const fixed=infraTotal();
   const equipTotal=(ini.equipment||[]).reduce((s,it)=>s+num(it.amount),0);
   const invTotal=(ini.inventory||[]).reduce((s,it)=>s+num(it.amount),0);
   const total=fixed+equipTotal+invTotal;
   // 汇总框默认只读，自动读取下面相关板块的数值（房租装修卡片/设备列表/原有食材&包材列表）
   document.getElementById('initialSummary').innerHTML=
     statInput('初始投入合计',total,'iniSummaryTotal',true)+
-    statInput('房租&装修&证件&收款系统',fixed,'iniSummaryFixed',true)+
+    statInput('基础设施投入',fixed,'iniSummaryFixed',true)+
     statInput('设备物资合计',equipTotal,'iniSummaryEquipment',true)+
     statInput('原有食材&包材合计',invTotal,'iniSummaryInventory',true);
 }
