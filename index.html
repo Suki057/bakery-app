@@ -476,7 +476,7 @@
       </div>
     </div>
     <div class="card">
-      <h2>🥦 9月现有食材和包材 <span class="tag" id="iniInventoryTag">0 项</span></h2>
+      <h2>🥦 原有食材&包材 <span class="tag" id="iniInventoryTag">0 项</span></h2>
       <div class="table-wrap">
         <table id="iniInventoryTable" class="initial-item-table">
           <thead><tr><th style="width:22%">名称</th><th style="width:16%">数量</th><th style="width:16%">金额</th><th style="width:26%">备注</th><th style="width:20%"></th></tr></thead>
@@ -633,7 +633,7 @@ function q(s){return document.querySelector(s)}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1600)}
 function esc(s){return (s||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));}
 function stat(k,v){return `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`}
-function statInput(k,v,id){const showVal=(v!=='' && num(v)>0)?num(v):'';return `<div class="stat stat-input"><div class="k">${k}</div><div class="v currency-field"><span class="currency">¥</span><input type="number" step="0.01" id="${id}" value="${showVal}" oninput="onInitialSummaryEdit('${id}')"></div></div>`}
+function statInput(k,v,id,ro){const showVal=(v!=='' && num(v)>0)?num(v):'';const attrs=ro?`id="${id}" disabled`:`id="${id}" oninput="onInitialSummaryEdit('${id}')"`;return `<div class="stat stat-input"><div class="k">${k}</div><div class="v currency-field"><span class="currency">¥</span><input type="number" step="0.01" ${attrs} value="${showVal}"></div></div>`}
 
 /* ---------- 每日 ---------- */
 function getDraft(date){return S.draft[date]||{ch:{}}}
@@ -1277,21 +1277,12 @@ function renderInitialSummary(){
   const equipTotal=(ini.equipment||[]).reduce((s,it)=>s+num(it.amount),0);
   const invTotal=(ini.inventory||[]).reduce((s,it)=>s+num(it.amount),0);
   const total=fixed+equipTotal+invTotal;
-  const sum=ini.summary||{total:'',fixed:'',equipment:'',inventory:''};
+  // 汇总框默认只读，自动读取下面相关板块的数值（房租装修卡片/设备列表/原有食材&包材列表）
   document.getElementById('initialSummary').innerHTML=
-    statInput('初始投入合计',sum.total!==''?sum.total:total,'iniSummaryTotal')+
-    statInput('房租&装修&证件&收款系统',sum.fixed!==''?sum.fixed:fixed,'iniSummaryFixed')+
-    statInput('设备物资合计',sum.equipment!==''?sum.equipment:equipTotal,'iniSummaryEquipment')+
-    statInput('食材包材合计',sum.inventory!==''?sum.inventory:invTotal,'iniSummaryInventory');
-}
-function onInitialSummaryEdit(id){
-  const ini=getInitial();
-  if(!ini.summary) ini.summary={total:'',fixed:'',equipment:'',inventory:''};
-  const map={'iniSummaryTotal':'total','iniSummaryFixed':'fixed','iniSummaryEquipment':'equipment','iniSummaryInventory':'inventory'};
-  const key=map[id]; if(!key) return;
-  ini.summary[key]=document.getElementById(id).value;
-  S.initial=ini;
-  clearTimeout(window._sumT);window._sumT=setTimeout(save,500);
+    statInput('初始投入合计',total,'iniSummaryTotal',true)+
+    statInput('房租&装修&证件&收款系统',fixed,'iniSummaryFixed',true)+
+    statInput('设备物资合计',equipTotal,'iniSummaryEquipment',true)+
+    statInput('原有食材&包材合计',invTotal,'iniSummaryInventory',true);
 }
 function renderInitialList(key,tableId,tagId,fields,headers){
   const ini=getInitial();
