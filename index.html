@@ -1175,7 +1175,7 @@ function renderFundItems(type){
       <div class="field currency-field"><span class="currency">¥</span><input type="number" step="0.01" class="fi-amount" data-idx="${idx}" value="${it.amount===0||it.amount===''?'':it.amount}" placeholder="0.00" ${locked?'disabled':''}></div>
       <div class="field" style="display:flex;gap:4px;justify-content:flex-end;align-items:center">
         ${locked
-          ? `<button type="button" class="btn ghost xs" onclick="editFundItem('${type}',${idx})">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delFundItem('${type}',${idx})" style="color:var(--red)">…</button>`
+          ? `<button type="button" class="btn ghost xs" onclick="editFundItem('${type}',${idx})">编辑</button><button type="button" class="btn ghost xs op-del" onclick="delFundItem('${type}',${idx})" style="color:var(--red)">删除</button>`
           : `<button type="button" class="btn xs" onclick="saveFundItem('${type}',${idx})">确定</button>`
         }
       </div>`;
@@ -1806,6 +1806,9 @@ function showUpdateBanner(){
   btn.style.cssText='background:#fff;color:#e65100;border:none;border-radius:6px;padding:4px 12px;font-weight:600;cursor:pointer;margin-left:10px';
   btn.onclick=()=>location.reload();b.appendChild(btn);
   document.body.appendChild(b);
+  // 检测到新版本后 4 秒自动重载到最新，避免大陆网络下旧缓存卡住看不到更新
+  clearTimeout(window._swAutoT);
+  window._swAutoT=setTimeout(()=>{if(!window._swReloaded){window._swReloaded=true;location.reload();}},4000);
 }
 /* init */
 purgeTrash();
