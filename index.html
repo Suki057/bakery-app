@@ -244,6 +244,17 @@
     .box{font-size:11px;padding:6px 6px}
     .infra-table th{font-size:9px}
   }
+  /* 跨板块日期联动：回到今天按钮 */
+  .date-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .date-row > label{flex:0 0 auto}
+  .date-row > input[type=date],.date-row > input[type=month]{flex:1 1 150px;min-width:130px}
+  .btn-today{flex:0 0 auto;font-size:11px;padding:6px 11px;border-radius:8px;border:1px solid var(--edge,#e3e3e8);background:#fff;color:#6b7280;cursor:pointer;white-space:nowrap;margin:0}
+  .btn-today:hover{background:#f4f5f7;color:#111}
+  .btn-today:active{transform:translateY(1px)}
+  @media(max-width:640px){
+    .date-row > input[type=date],.date-row > input[type=month]{flex:1 1 120px}
+    .btn-today{padding:5px 9px;font-size:10px}
+  }
 </style>
 </head>
 <body>
@@ -269,8 +280,9 @@
   <section id="tab-daily">
     <div class="card">
       <h2>📅 每日记账</h2>
-      <div class="field" style="margin-bottom:14px"><label style="font-size:9px">记录日期</label>
-        <input type="date" id="dailyDate" onchange="renderDaily()"></div>
+      <div class="field date-row" style="margin-bottom:14px"><label style="font-size:9px">记录日期</label>
+        <input type="date" id="dailyDate" onchange="onDailyDateChange()">
+        <button type="button" class="btn-today" onclick="backToToday()">↩ 回到今天</button></div>
       <div id="blockA"></div>
       <div id="blockB" style="margin-top:18px"></div>
       <div class="hint">填各渠道数据后，利润按公式自动算：堂食/画室 = 营业额×利润率；美团/闪购/京东 = 到手价×利润率。点板块「保存为明细」把有数据的行存入下方明细并清空方框。</div>
@@ -282,15 +294,17 @@
     </div>
     <div class="card">
       <h2>📊 当月营业额 <span class="tag" id="monthTurnoverLabel"></span></h2>
-      <div class="field" style="margin-bottom:14px"><label>选择月份</label>
-        <input type="month" id="monthTurnoverMonth" onchange="renderMonthTurnover()"></div>
+      <div class="field date-row" style="margin-bottom:14px"><label>选择月份</label>
+        <input type="month" id="monthTurnoverMonth" onchange="onMonthChange(this)">
+        <button type="button" class="btn-today" onclick="backToToday()">↩ 回到今天</button></div>
       <div class="summary" id="monthTurnoverSummary"></div>
     </div>
     <div class="card">
       <h2 style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">📋 数据明细 <span class="tag">按日期聚合</span>
         <span style="font-size:13px;font-weight:normal;display:inline-flex;align-items:center;gap:6px">
           <label>选择月份</label>
-          <input type="month" id="dailyDetailMonth" onchange="renderDailyDetail()" style="height:28px;padding:2px 6px">
+          <input type="month" id="dailyDetailMonth" onchange="onMonthChange(this)" style="height:28px;padding:2px 6px">
+          <button type="button" class="btn-today" onclick="backToToday()">↩ 今天</button>
         </span>
       </h2>
       <div class="table-wrap">
@@ -309,8 +323,9 @@
     <div class="card">
       <h2>🧾 当月成本明细 <span class="tag">默认锁定当月</span></h2>
       <div class="row grid2" style="margin-bottom:12px">
-        <div class="field"><label>选择月份（默认当月，可切换看历史）</label>
-          <input type="month" id="monthPick" onchange="renderMonthly()"></div>
+        <div class="field date-row"><label>选择月份（默认当月，可切换看历史）</label>
+          <input type="month" id="monthPick" onchange="onMonthChange(this)">
+          <button type="button" class="btn-today" onclick="backToToday()">↩ 回到今天</button></div>
         <div class="field currency-field"><label>当月实际营业额</label><span class="currency">¥</span>
           <input id="monthNet" disabled></div>
       </div>
@@ -411,8 +426,9 @@
     <div class="card">
       <h2>🛒 进货清单 <span class="tag">自动分类</span></h2>
       <div class="row grid2" style="margin-bottom:14px">
-        <div class="field"><label>按月份筛选</label>
-          <input type="month" id="purMonth" onchange="renderPurchase()"></div>
+        <div class="field date-row"><label>按月份筛选</label>
+          <input type="month" id="purMonth" onchange="onMonthChange(this)">
+          <button type="button" class="btn-today" onclick="backToToday()">↩ 回到今天</button></div>
         <div class="field"><label>当月进货合计</label>
           <input id="purMonthTotal" disabled></div>
       </div>
@@ -642,6 +658,37 @@ function fmtMD(d){if(!d)return '';const p=(''+d).split('-');if(p.length<3)return
 function fmtMonth(m){if(!m)return '';const p=(''+m).split('-');return p[1]||m;}
 function dataYear(){const yrs=[];(S.records||[]).forEach(r=>{if(r.date)yrs.push(r.date.slice(0,4));});(S.purchase||[]).forEach(p=>{if(p.date)yrs.push(p.date.slice(0,4));});Object.keys(S.monthly||{}).forEach(k=>yrs.push(k.slice(0,4)));return yrs.filter(Boolean).length?Math.max(...yrs):new Date().getFullYear();}
 function today(){return ymd(new Date())}
+/* ---------- 跨板块日期联动 ---------- */
+/* curViewMonth 为全局唯一“当前查看月份”(YYYY-MM)，所有年月选择器共享 */
+let curViewMonth=ym(new Date());
+function lastDayOfMonth(ymStr){const p=(''+ymStr).split('-');const y=+p[0],mo=+p[1];const d=new Date(y,mo,0);return y+'-'+String(mo).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+/* 把全局月份同步到所有年月选择器；非 fromDaily 时把每日记账的年月日选择器置为该月最后一天 */
+function syncDateControls(opts){
+  const m=curViewMonth;
+  ['monthPick','purMonth','dailyDetailMonth','monthTurnoverMonth'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=m;});
+  if(!opts||!opts.fromDaily){const dd=document.getElementById('dailyDate');if(dd)dd.value=lastDayOfMonth(m);}
+  renderMonthly();renderPurchase();renderDailyDetail();renderMonthTurnover();renderDaily();
+}
+/* 某板块的年月日选择器（每日记账）改动：自身保留所选日期，其余板块同步到该月 */
+function onDailyDateChange(){
+  const v=document.getElementById('dailyDate').value;
+  const d=v?new Date(v+'T00:00:00'):new Date();
+  curViewMonth=ym(d);
+  syncDateControls({fromDaily:true});
+}
+/* 任意年月选择器改动：所有板块统一切换到该月，每日记账显示该月最后一天 */
+function onMonthChange(el){
+  const m=el&&el.value; if(!m)return;
+  curViewMonth=m;
+  syncDateControls();
+}
+/* 回到今天：每日记账=今天，其余板块=当月 */
+function backToToday(){
+  const now=new Date();
+  curViewMonth=ym(now);
+  const dd=document.getElementById('dailyDate');if(dd)dd.value=today();
+  syncDateControls({fromDaily:true});
+}
 function daysAgoStr(n){const d=new Date();d.setDate(d.getDate()-n);return ymd(d)}
 function ageDays(s){const a=new Date(s+'T00:00:00'),b=new Date(today()+'T00:00:00');return Math.floor((b-a)/86400000)}
 function money(v){return '¥'+num(v).toLocaleString('zh-CN',{maximumFractionDigits:2})}
@@ -785,11 +832,13 @@ function renderDailyDetail(){
 }
 function editDay(d){
   document.getElementById('dailyDate').value=d;
+  curViewMonth=ym(new Date(d+'T00:00:00'));
   // 把该日期已保存的明细回填到表单草稿，方便直接在原数据上修改
   const day={ch:{}};
   (S.records||[]).filter(r=>r.date===d).forEach(r=>{day.ch[r.ch]={r:r.r,n:r.n,m:r.m};});
   S.draft[d]=day;
   switchTab('daily'); // 切换到每日记账并渲染（此时已带出原数据）
+  syncDateControls({fromDaily:true}); // 同步其余板块到该月，且保留每日记账为原日期 d
   // 自动向上滑动到「每日记账」表单板块并高亮提示
   const card=document.querySelector('#tab-daily .card');
   if(card){
@@ -962,7 +1011,7 @@ function renderMonthlyDetail(){
     <td></td>
   </tr>`;
 }
-function editMonth(m){document.getElementById('monthPick').value=m;switchTab('monthly');renderMonthly();}
+function editMonth(m){curViewMonth=m;document.getElementById('monthPick').value=m;switchTab('monthly');syncDateControls();}
 function delMonth(m){
   showConfirm('删除「'+m+'」整月数据？该月所有记账、进货记录将被移入回收站。',()=>{
     const records=(S.records||[]).filter(r=>r.date&&r.date.startsWith(m));
@@ -1759,11 +1808,13 @@ function showUpdateBanner(){
 }
 /* init */
 purgeTrash();
+const _now0=new Date();
+curViewMonth=ym(_now0);
 document.getElementById('dailyDate').value=today();
-document.getElementById('monthPick').value=ym(new Date());
-document.getElementById('purMonth').value=ym(new Date());
-document.getElementById('dailyDetailMonth').value=ym(new Date());
-document.getElementById('monthTurnoverMonth').value=ym(new Date());
+document.getElementById('monthPick').value=curViewMonth;
+document.getElementById('purMonth').value=curViewMonth;
+document.getElementById('dailyDetailMonth').value=curViewMonth;
+document.getElementById('monthTurnoverMonth').value=curViewMonth;
 document.getElementById('purDate').value=today();
 fillCatSelect('purCat');renderPurchase();renderDaily();renderSettings();renderMonthTurnover();renderDailyDetail();
 if('serviceWorker' in navigator){
