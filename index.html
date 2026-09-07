@@ -164,9 +164,10 @@
   .table-wrap th,.table-wrap td{padding:7px 8px;white-space:nowrap}
   .table-wrap th{background:rgba(255,231,151,0.22)}
   .table-wrap td .small{display:block;font-size:8px;color:var(--muted)}
-  .initial-item-table{min-width:100%!important;table-layout:fixed;width:100%}
-  .initial-item-table th,.initial-item-table td{text-align:left;overflow:hidden;text-overflow:ellipsis}
-  .initial-item-table td:last-child,.initial-item-table th:last-child{text-align:right;white-space:nowrap}
+  .initial-item-table{min-width:520px;width:auto;border-collapse:collapse}
+  .initial-item-table th,.initial-item-table td{text-align:left;white-space:nowrap}
+  .initial-item-table td:nth-child(1),.initial-item-table th:nth-child(1){min-width:120px}
+  .initial-item-table td:last-child,.initial-item-table th:last-child{text-align:right;white-space:nowrap;min-width:105px}
   .initial-item-table td:last-child .btn{margin:0 2px}
   .purchase-table{table-layout:fixed;width:100%;min-width:640px!important;border-collapse:collapse}
   .purchase-table th,.purchase-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:4px 5px}
